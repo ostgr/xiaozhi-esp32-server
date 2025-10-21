@@ -1,105 +1,105 @@
-# get_news_from_newsnow 插件新闻源配置指南
+# get_news_from_newsnow Plugin News Source Configuration Guide
 
-## 概述
+## Overview
 
-`get_news_from_newsnow` 插件现在支持通过Web管理界面动态配置新闻源，不再需要修改代码。用户可以在智控台中为每个智能体配置不同的新闻源。
+The `get_news_from_newsnow` plugin now supports dynamically configuring news sources through the Web management interface, no longer requiring code modifications. Users can configure different news sources for each agent in the control panel.
 
-## 配置方式
+## Configuration Methods
 
-### 1. 通过Web管理界面配置（推荐）
+### 1. Web Management Interface Configuration (Recommended)
 
-1. 登录智控台
-2. 进入"角色配置"页面
-3. 选择要配置的智能体
-4. 点击"编辑功能"按钮
-5. 在右侧参数配置区域找到"newsnow新闻聚合"插件
-6. 在"新闻源配置"字段中输入分号分隔的中文名称
+1. Login to the control panel
+2. Go to "Role Configuration" page
+3. Select the agent you want to configure
+4. Click "Edit Functions" button
+5. Find the "newsnow news aggregation" plugin in the right parameter configuration area
+6. Enter semicolon-separated Chinese names in the "News Source Configuration" field
 
-### 2. 配置文件方式
+### 2. Configuration File Method
 
-在 `config.yaml` 中配置：
+Configure in `config.yaml`:
 
 ```yaml
 plugins:
   get_news_from_newsnow:
     url: "https://newsnow.busiyi.world/api/s?id="
-    news_sources: "澎湃新闻;百度热搜;财联社;微博;抖音"
+    news_sources: "The Paper;Baidu Hot Search;Cailian Press;Weibo;Douyin"
 ```
 
-## 新闻源配置格式
+## News Source Configuration Format
 
-新闻源配置使用分号分隔的中文名称，格式为：
-
-```
-中文名称1;中文名称2;中文名称3
-```
-
-### 配置示例
+News source configuration uses semicolon-separated Chinese names, format:
 
 ```
-澎湃新闻;百度热搜;财联社;微博;抖音;知乎;36氪
+Chinese Name 1;Chinese Name 2;Chinese Name 3
 ```
 
-## 支持的新闻源
-
-插件支持以下新闻源的中文名称：
-
-- 澎湃新闻
-- 百度热搜
-- 财联社
-- 微博
-- 抖音
-- 知乎
-- 36氪
-- 华尔街见闻
-- IT之家
-- 今日头条
-- 虎扑
-- 哔哩哔哩
-- 快手
-- 雪球
-- 格隆汇
-- 法布财经
-- 金十数据
-- 牛客
-- 少数派
-- 稀土掘金
-- 凤凰网
-- 虫部落
-- 联合早报
-- 酷安
-- 远景论坛
-- 参考消息
-- 卫星通讯社
-- 百度贴吧
-- 靠谱新闻
-- 以及更多...
-
-## 默认配置
-
-如果未配置新闻源，插件将使用以下默认配置：
+### Configuration Example
 
 ```
-澎湃新闻;百度热搜;财联社
+The Paper;Baidu Hot Search;Cailian Press;Weibo;Douyin;Zhihu;36Kr
 ```
 
-## 使用说明
+## Supported News Sources
 
-1. **配置新闻源**：在Web界面或配置文件中设置新闻源的中文名称，用分号分隔
-2. **调用插件**：用户可以说"播报新闻"或"获取新闻"
-3. **指定新闻源**：用户可以说"播报澎湃新闻"或"获取百度热搜"
-4. **获取详情**：用户可以说"详细介绍这条新闻"
+The plugin supports the following Chinese names for news sources:
 
-## 工作原理
+- The Paper (澎湃新闻)
+- Baidu Hot Search (百度热搜)
+- Cailian Press (财联社)
+- Weibo (微博)
+- Douyin (抖音)
+- Zhihu (知乎)
+- 36Kr (36氪)
+- Wall Street Journal (华尔街见闻)
+- IT Home (IT之家)
+- Toutiao (今日头条)
+- Hupu (虎扑)
+- Bilibili (哔哩哔哩)
+- Kuaishou (快手)
+- Xueqiu (雪球)
+- Gelonghui (格隆汇)
+- Fabu Finance (法布财经)
+- Jin10 Data (金十数据)
+- Nowcoder (牛客)
+- Sspai (少数派)
+- Juejin (稀土掘金)
+- Phoenix News (凤凰网)
+- Chongbuluo (虫部落)
+- Zaobao (联合早报)
+- Coolapk (酷安)
+- CleanTechnica Forum (远景论坛)
+- Reference News (参考消息)
+- Sputnik News (卫星通讯社)
+- Baidu Tieba (百度贴吧)
+- Reliable News (靠谱新闻)
+- And more...
 
-1. 插件接受中文名称作为参数（如"澎湃新闻"）
-2. 根据配置的新闻源列表，将中文名称转换为对应的英文ID（如"thepaper"）
-3. 使用英文ID调用API获取新闻数据
-4. 返回新闻内容给用户
+## Default Configuration
 
-## 注意事项
+If no news sources are configured, the plugin will use the following default configuration:
 
-1. 配置的中文名称必须与 CHANNEL_MAP 中定义的名称完全一致
-2. 配置更改后需要重启服务或重新加载配置
-3. 如果配置的新闻源无效，插件会自动使用默认新闻源
-4. 多个新闻源之间使用英文分号(;)分隔，不要使用中文分号(；)
+```
+The Paper;Baidu Hot Search;Cailian Press
+```
+
+## Usage Instructions
+
+1. **Configure News Sources**: Set Chinese names of news sources in the Web interface or configuration file, separated by semicolons
+2. **Call Plugin**: Users can say "broadcast news" or "get news"
+3. **Specify News Source**: Users can say "broadcast The Paper news" or "get Baidu Hot Search"
+4. **Get Details**: Users can say "give me detailed information about this news"
+
+## Working Principle
+
+1. Plugin accepts Chinese names as parameters (e.g., "The Paper")
+2. Based on the configured news source list, converts Chinese names to corresponding English IDs (e.g., "thepaper")
+3. Uses English ID to call API to get news data
+4. Returns news content to user
+
+## Notes
+
+1. Configured Chinese names must exactly match the names defined in CHANNEL_MAP
+2. Service restart or configuration reload required after configuration changes
+3. If configured news sources are invalid, plugin will automatically use default news sources
+4. Use English semicolon (;) to separate multiple news sources, not Chinese semicolon (；)

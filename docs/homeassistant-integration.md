@@ -1,186 +1,183 @@
-# 小智ESP32-开源服务端与HomeAssistant集成指南
+# Xiaozhi ESP32 Open Source Server and Home Assistant Integration Guide
 
 [TOC]
 
 -----
 
-## 简介
+## Introduction
 
-本文档将指导您如何将ESP32设备与HomeAssistant进行集成。
+This document will guide you on how to integrate ESP32 devices with Home Assistant.
 
-## 前提条件
+## Prerequisites
 
-- 已安装并配置好`HomeAssistant`
-- 本次我选择的模型是：免费的ChatGLM，它支持functioncall函数调用
+- Home Assistant is already installed and configured
+- For this tutorial, I chose the model: free ChatGLM, which supports function call
 
-## 开始前的操作（必要）
+## Pre-setup Operations (Required)
 
-### 1. 获取HA的网络网络地址信息
+### 1. Get HA Network Address Information
 
-请访问你Home Assistant的网络地址，例如，我的HA的地址是192.168.4.7，端口则是默认的8123，则在浏览器打开
+Please visit your Home Assistant network address. For example, my HA address is 192.168.4.7, and the port is the default 8123, so open in browser:
 
 ```
 http://192.168.4.7:8123
 ```
 
-> 手动查询 HA 的 IP 地址方法**（仅限小智esp32-server和HA部署在同一个网络设备[例如同一个wifi]下）**：
+> Manual method to query HA's IP address **(only applicable when xiaozhi esp32-server and HA are deployed on the same network device [e.g., same wifi])**:
 >
-> 1. 进入 Home Assistant（前端）。
+> 1. Enter Home Assistant (frontend).
 >
-> 2. 点击左下角 **设置（Settings）** → **系统（System）** → **网络（Network）**。
+> 2. Click bottom left **Settings** → **System** → **Network**.
 >
-> 3. 滑到最底部`Home Assistant 网址(Home Assistant website)`区域，在`本地网络(local network)`中，点击`眼睛`按钮，可以看到当前使用的 IP 地址（如 `192.168.1.10`）和网络接口。点击`复制连接(copy link)`可以直接复制。
+> 3. Scroll to the bottom `Home Assistant website` area, in the `local network` section, click the `eye` button to see the currently used IP address (like `192.168.1.10`) and network interface. Click `copy link` to copy directly.
 >
 >    ![image-20250504051716417](images/image-ha-integration-01.png)
 
-或，您已经设置了直接可以访问的Home Assistant的OAuth地址，您也可以在浏览器内直接访问
+Or, if you have already set up a directly accessible Home Assistant OAuth address, you can also directly access in browser:
 
 ```
 http://homeassistant.local:8123
 ```
 
-### 2. 登录`Home Assistant`拿到开发密钥
+### 2. Login to Home Assistant to Get Development Key
 
-登录`HomeAssistant`，点击`左下角头像 -> 个人`，切换`安全`导航栏，划到底部`长期访问令牌`生成api_key，并复制保存，后续的方法都需要使用这个api key且仅出现一次（小tips: 您可以保存生成的二维码图像，后续可以扫描二维码再此提取api key）。
+Login to Home Assistant, click `bottom left avatar -> Personal`, switch to `Security` tab, scroll to bottom `Long-lived access tokens` to generate api_key, and copy and save it. All subsequent methods need this api key and it only appears once (tip: You can save the generated QR code image, and later scan the QR code to extract the api key again).
 
-## 方法1：小智社区共建的HA调用功能
+## Method 1: HA Control Function Co-built by Xiaozhi Community
 
-### 功能描述
+### Function Description
 
-- 如您后续需要增加新的设备，该方法需要手动重启`xiaozhi-esp32-server服务端`以此更新设备信息**（重要**）。
+- If you need to add new devices later, this method requires manually restarting the `xiaozhi-esp32-server service` to update device information **(Important)**.
 
-- 需要您确保已经在HomeAssistant中集成`Xiaomi Home`，并将米家的设备导入进`HomeAssistant`。
+- You need to ensure that you have integrated `Xiaomi Home` in Home Assistant and imported Mijia devices into Home Assistant.
 
-- 需要您确保`xiaozhi-esp32-server智控台`能正常使用。
+- You need to ensure that `xiaozhi-esp32-server Control Panel` can be used normally.
 
-- 我的`xiaozhi-esp32-server智控台`和`HomeAssistant`部署在同一台机器的另一个端口，版本是`0.3.10`
+- My `xiaozhi-esp32-server Control Panel` and `Home Assistant` are deployed on the same machine on another port, version is `0.3.10`
 
   ```
   http://192.168.4.7:8002
   ```
 
+### Configuration Steps
 
-### 配置步骤
+#### 1. Login to Home Assistant to Organize Device List to Control
 
-#### 1. 登录`HomeAssistant`整理需要控制的设备清单
+Login to Home Assistant, click `Settings` in the bottom left, then enter `Devices & Services`, then click `Entities` at the top.
 
-登录`HomeAssistant`，点击`左下角的设置`，然后进入`设备与服务`，再点击顶部的`实体`。
+Then search for the switches you want to control in entities. After results appear, click one of the results in the list, which will show a switch interface.
 
-然后在实体中搜索你相关控制的开关，结果出来后，在列表中，点击其中一个结果，这是会出现一个开关的界面。
+In the switch interface, try clicking the switch to see if it turns on/off with our clicks. If it can be operated, it means it's properly connected to the network.
 
-在开关的界面，我们尝试点击开关，看看是开发会随着我们的点击开/关。如果能操作，说明是正常联网的。
+Then find the settings button in the switch panel, click it, and you can view the `Entity ID` of this switch.
 
-接着在开关面板找到设置按钮，点击后，可以查看这个开关的`实体标识符`。
+Open a notepad and organize data in this format:
 
-我们打开一个记事本，按照这样格式整理一条数据：
+Location + English comma + Device name + English comma + `Entity ID` + English semicolon
 
-位置+英文逗号+设备名称+英文逗号+`实体标识符`+英文分号
-
-例如，我在公司，我有一个玩具灯，他的标识符是switch.cuco_cn_460494544_cp1_on_p_2_1，那么就这个写这一条数据
-
-```
-公司,玩具灯,switch.cuco_cn_460494544_cp1_on_p_2_1;
-```
-
-当然最后我可能要操作两个灯，我的最终的结果是：
+For example, I'm at the office, I have a toy light, its identifier is switch.cuco_cn_460494544_cp1_on_p_2_1, then I write this data:
 
 ```
-公司,玩具灯,switch.cuco_cn_460494544_cp1_on_p_2_1;
-公司,台灯,switch.iot_cn_831898993_socn1_on_p_2_1;
+Office,Toy Light,switch.cuco_cn_460494544_cp1_on_p_2_1;
 ```
 
-这段字符，我们称为“设备清单字符”需要保存好，等一下有用。
+Of course, I might need to control two lights eventually, so my final result is:
 
-#### 2. 登录`智控台`
+```
+Office,Toy Light,switch.cuco_cn_460494544_cp1_on_p_2_1;
+Office,Desk Lamp,switch.iot_cn_831898993_socn1_on_p_2_1;
+```
+
+This string, we call it "device list string", needs to be saved for later use.
+
+#### 2. Login to Control Panel
 
 ![image-20250504051716417](images/image-ha-integration-06.png)
 
-使用管理员账号，登录`智控台`。在`智能体管理`，找到你的智能体，再点击`配置角色`。
+Use administrator account to login to the Control Panel. In `Agent Management`, find your agent, then click `Configure Role`.
 
-将意图识别设置成`函数调用`或`LLM意图识别`。这时你会看到右侧有一个`编辑功能`。点击`编辑功能`按钮，会弹出`功能管理`的框。
+Set intent recognition to `Function Call` or `LLM Intent Recognition`. You will see an `Edit Functions` button on the right. Click the `Edit Functions` button, and a `Function Management` box will pop up.
 
-在`功能管理`的框里，你需要勾选`HomeAssistant设备状态查询`和`HomeAssistant设备状态修改`。
+In the `Function Management` box, you need to check `Home Assistant Device Status Query` and `Home Assistant Device Status Modification`.
 
-勾选后，在`已选功能`点击`HomeAssistant设备状态查询`，然后在`参数配置`里配置你的`HomeAssistant`地址、密钥、设备清单字符。
+After checking, click `Home Assistant Device Status Query` in `Selected Functions`, then configure your Home Assistant address, key, and device list string in `Parameter Configuration`.
 
-编辑好后，点击`保存配置`，这时`功能管理`的框会隐藏，这时你再点击保存智能体配置。
+After editing, click `Save Configuration`. The `Function Management` box will hide, then click save agent configuration.
 
-保存成功后，即可唤醒设备操作。
+After successful saving, you can wake up the device for control.
 
-#### 3. 唤醒设别进行控制
+#### 3. Wake Up Device for Control
 
-尝试和esp32说，“打开XXX灯”
+Try saying to esp32, "Turn on XXX light"
 
-## 方法2：小智将Home Assistant的语音助手作为LLM工具
+## Method 2: Using Home Assistant's Voice Assistant as LLM Tool for Xiaozhi
 
-### 功能描述
+### Function Description
 
-- 该方法有一个比较严重的缺点——**该方法无法使用小智开源生态的function_call插件功能的能力**，因为使用Home Assistant作为小智的LLM工具会将意图识别能力转让给Home Assistant。但是**这个方法是能体验到原生的Home Assistant操作功能，且小智的聊天能力不变**。如实在介意可以使用同样是Home Assistant支持的[方法3](##方法3：使用Home Assistant的MCP服务（推荐）)，能够最大程度体验到Home Assistant的功能。
+- This method has a serious drawback - **this method cannot use the function_call plugin capabilities of Xiaozhi's open source ecosystem**, because using Home Assistant as Xiaozhi's LLM tool transfers intent recognition capabilities to Home Assistant. However, **this method allows you to experience native Home Assistant operation functions, and Xiaozhi's chat capabilities remain unchanged**. If you mind this, you can use [Method 3](##Method 3: Using Home Assistant's MCP Service (Recommended)) which is also supported by Home Assistant and allows maximum experience of Home Assistant functions.
 
-### 配置步骤：
+### Configuration Steps:
 
-#### 1. 配置Home Assistant的大模型语音助手。
+#### 1. Configure Home Assistant's Large Model Voice Assistant.
 
-**需要您提前配置好Home Assistant的语音助手或大模型工具。**
+**You need to configure Home Assistant's voice assistant or large model tool in advance.**
 
-#### 2. 获取Home Assistant的语言助手的Agent ID.
+#### 2. Get Home Assistant's Language Assistant Agent ID.
 
-1. 进入Home Assistant页面内。左侧点击`开发者助手`。
-2. 在打开的`开发者助手`内，点击`动作`选项卡（如图示操作1），在页面内的选项栏`动作`中，找到或输入`conversation.process（对话-处理）`并选择`对话（conversation）: 处理`（如图示操作2）。
+1. Enter the Home Assistant page. Click `Developer Tools` on the left.
+2. In the opened `Developer Tools`, click the `Actions` tab (as shown in operation 1), find or enter `conversation.process (Conversation - Process)` in the page's `Action` option and select `Conversation: Process` (as shown in operation 2).
 
 ![image-20250504043539343](images/image-ha-integration-02.png)
 
-3. 在页面内勾选`代理(agent)`选项，在变成常亮的`对话代理(conversation agent)`内选择您步骤一配置好的语音助手名称，如图示，我这边配置好的是`ZhipuAi`并选择。
+3. Check the `agent` option on the page, select your configured voice assistant name in the highlighted `conversation agent`, as shown, mine is configured as `ZhipuAi` and selected.
 
 ![image-20250504043854760](images/image-ha-integration-03.png)
 
-4. 选中后，点击表单左下方的`进入YAML模式`。
+4. After selection, click `Enter YAML Mode` at the bottom left of the form.
 
 ![image-20250504043951126](images/image-ha-integration-04.png)
 
-5. 复制其中的agent-id的值，例如图示中我的是`01JP2DYMBDF7F4ZA2DMCF2AGX2`(仅供参考)。
+5. Copy the agent-id value, for example, mine in the image is `01JP2DYMBDF7F4ZA2DMCF2AGX2` (for reference only).
 
 ![image-20250504044046466](images/image-ha-integration-05.png)
 
-6. 切换到小智开源服务端`xiaozhi-esp32-server`的`config.yaml`文件内，在LLM配置中，找到Home Assistant，设置您的Home Assistant的网络地址，Api key和刚刚查询到的agent_id。
-7. 修改`config.yaml`文件内的`selected_module`属性的`LLM`为`HomeAssistant`，`Intent`为`nointent`。
-8. 重启小智开源服务端`xiaozhi-esp32-server`即可正常使用。
+6. Switch to the Xiaozhi open source server `xiaozhi-esp32-server`'s `config.yaml` file, in the LLM configuration, find Home Assistant, set your Home Assistant network address, Api key and the agent_id you just queried.
+7. Modify the `selected_module` property's `LLM` to `HomeAssistant` and `Intent` to `nointent` in the `config.yaml` file.
+8. Restart the Xiaozhi open source server `xiaozhi-esp32-server` to use normally.
 
-## 方法3：使用Home Assistant的MCP服务（推荐）
+## Method 3: Using Home Assistant's MCP Service (Recommended)
 
-### 功能描述
+### Function Description
 
-- 需要您提前在Home Assistant内集成并安装好HA集成——[Model Context Protocol Server](https://www.home-assistant.io/integrations/mcp_server/)。
+- You need to integrate and install the HA integration in Home Assistant in advance - [Model Context Protocol Server](https://www.home-assistant.io/integrations/mcp_server/).
 
-- 这个方法与方法2都是HA官方提供的解决方法，与方法2不同的是，您可以正常使用小智开源服务端`xiaozhi-esp32-server`的开源共建的插件，同时允许您随意使用任何一个支持function_call功能的LLM大模型。
+- This method and Method 2 are both official solutions provided by HA. Unlike Method 2, you can normally use the open source co-built plugins of Xiaozhi open source server `xiaozhi-esp32-server`, while allowing you to freely use any LLM large model that supports function_call functionality.
 
-### 配置步骤
+### Configuration Steps
 
-#### 1. 安装Home Assistant的MCP服务集成。
+#### 1. Install Home Assistant's MCP Service Integration.
 
-集成官方网址——[Model Context Protocol Server](https://www.home-assistant.io/integrations/mcp_server/)。。
+Integration official website - [Model Context Protocol Server](https://www.home-assistant.io/integrations/mcp_server/).
 
-或跟随以下手动操作。
+Or follow these manual operations.
 
-> - 前往Home Assistant页面的**[设置 > 设备和服务（Settings > Devices & Services.）](https://my.home-assistant.io/redirect/integrations)**。
+> - Go to Home Assistant page's **[Settings > Devices & Services](https://my.home-assistant.io/redirect/integrations)**.
 >
-> - 在右下角，选择 **[添加集成（Add Integration）](https://my.home-assistant.io/redirect/config_flow_start?domain=mcp_server)**按钮。
+> - In the bottom right corner, select the **[Add Integration](https://my.home-assistant.io/redirect/config_flow_start?domain=mcp_server)** button.
 >
-> - 从列表中选择**模型上下文协议服务器（Model Context Protocol Server）**。
+> - Select **Model Context Protocol Server** from the list.
 >
-> - 按照屏幕上的说明完成设置。
+> - Follow the on-screen instructions to complete setup.
 
-#### 2. 配置小智开源服务端MCP配置信息
+#### 2. Configure Xiaozhi Open Source Server MCP Configuration Information
 
+Enter the `data` directory and find the `.mcp_server_settings.json` file.
 
-进入`data`目录，找到`.mcp_server_settings.json`文件。
+If you don't have the `.mcp_server_settings.json` file in your `data` directory:
+- Please copy the `mcp_server_settings.json` file from the root directory of the `xiaozhi-server` folder to the `data` directory and rename it to `.mcp_server_settings.json`
+- Or [download this file](https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/main/xiaozhi-server/mcp_server_settings.json), download it to the `data` directory, and rename it to `.mcp_server_settings.json`
 
-如果你的`data`目录下没有`.mcp_server_settings.json`文件，
-- 请把在`xiaozhi-server`文件夹根目录的`mcp_server_settings.json`文件复制到`data`目录下，并重命名为`.mcp_server_settings.json`
-- 或[下载这个文件](https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/main/xiaozhi-server/mcp_server_settings.json)，下载到`data`目录下，并重命名为`.mcp_server_settings.json`
-
-
-修改`"mcpServers"`里的这部分的内容：
+Modify the content in `"mcpServers"`:
 
 ```json
 "Home Assistant": {
@@ -194,14 +191,14 @@ http://homeassistant.local:8123
 },
 ```
 
-注意：
+Note:
 
-1. **替换配置：**
-   - 替换`args`内的`YOUR_HA_HOST`为您的HA服务地址，如果你的服务地址已经包含了https/http字样（例如`http://192.168.1.101:8123`)，则只需要填入`192.168.1.101:8123`即可。
-   - 将`env`内`API_ACCESS_TOKEN`的`YOUR_API_ACCESS_TOKEN`替换成您之前获取到的开发密钥api key。
-2. **如果你添加配置是在`"mcpServers"`的括号内后续没有新的`mcpServers`的配置时，需要把最后的逗号`,`移除**，否则可能会解析失败。
+1. **Replace configuration:**
+   - Replace `YOUR_HA_HOST` in `args` with your HA service address. If your service address already includes https/http (e.g., `http://192.168.1.101:8123`), you only need to fill in `192.168.1.101:8123`.
+   - Replace `YOUR_API_ACCESS_TOKEN` in `env`'s `API_ACCESS_TOKEN` with the development key api key you obtained earlier.
+2. **If you add configuration in the `"mcpServers"` brackets and there are no new `mcpServers` configurations afterwards, you need to remove the last comma `,`**, otherwise parsing may fail.
 
-**最后效果参考以下（参考如下）**：
+**Final effect reference (as follows)**:
 
 ```json
  "mcpServers": {
@@ -217,10 +214,10 @@ http://homeassistant.local:8123
   }
 ```
 
-#### 3. 配置小智开源服务端的系统配置
+#### 3. Configure Xiaozhi Open Source Server System Configuration
 
-1. **选择任意一款支持function_call的LLM大模型作为小智的LLM聊天助手（但不要选择Home Assistant作为LLM工具）**，本次我选择的模型是：免费的ChatGLM，它支持functioncall函数调用，但部分时候调用不太稳定，如果像追求稳定建议把LLM设置成：DoubaoLLM，使用的具体model_name是：doubao-1-5-pro-32k-250115。
+1. **Choose any LLM large model that supports function_call as Xiaozhi's LLM chat assistant (but don't choose Home Assistant as LLM tool)**. For this tutorial, I chose the model: free ChatGLM, which supports function call, but sometimes the calls are not very stable. If you want stability, it's recommended to set LLM to: DoubaoLLM, using the specific model_name: doubao-1-5-pro-32k-250115.
 
-2. 切换到小智开源服务端`xiaozhi-esp32-server`的`config.yaml`文件内，设置您的LLM大模型配置，并且将`selected_module`配置的`Intent`调整为`function_call`。
+2. Switch to the Xiaozhi open source server `xiaozhi-esp32-server`'s `config.yaml` file, set your LLM large model configuration, and adjust the `Intent` in `selected_module` configuration to `function_call`.
 
-3. 重启小智开源服务端`xiaozhi-esp32-server`即可正常使用。
+3. Restart the Xiaozhi open source server `xiaozhi-esp32-server` to use normally.
