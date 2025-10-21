@@ -1,44 +1,45 @@
-# 阿里云短信集成指南
+# Alibaba Cloud SMS Integration Guide
 
-登录阿里云控制台，进入“短信服务”页面：https://dysms.console.aliyun.com/overview
+Login to Alibaba Cloud Console and go to the "SMS Service" page: https://dysms.console.aliyun.com/overview
 
-## 第一步 添加签名
-![步骤](images/alisms/sms-01.png)
-![步骤](images/alisms/sms-02.png)
+## Step 1: Add Signature
+![Steps](images/alisms/sms-01.png)
+![Steps](images/alisms/sms-02.png)
 
-以上步骤，会得到签名，请把它写入到智控台参数，`aliyun.sms.sign_name`
+The above steps will generate a signature. Please enter it into the control panel parameter `aliyun.sms.sign_name`
 
-## 第二步 添加模版
-![步骤](images/alisms/sms-11.png)
+## Step 2: Add Template
+![Steps](images/alisms/sms-11.png)
 
-以上步骤，会得到模版code，请把它写入到智控台参数，`aliyun.sms.sms_code_template_code`
+The above steps will generate a template code. Please enter it into the control panel parameter `aliyun.sms.sms_code_template_code`
 
-注意，签名要等7个工作日，等运营商报备成功后才能发送成功。
+Note: The signature requires 7 business days for carrier registration approval before SMS can be sent successfully.
 
-注意，签名要等7个工作日，等运营商报备成功后才能发送成功。
+Note: The signature requires 7 business days for carrier registration approval before SMS can be sent successfully.
 
-注意，签名要等7个工作日，等运营商报备成功后才能发送成功。
+Note: The signature requires 7 business days for carrier registration approval before SMS can be sent successfully.
 
-可以等报备成功后，再继续往下操作。
+You can wait for the registration approval to complete before proceeding with the following steps.
 
-## 第三步 创建短信账户和开通权限
+## Step 3: Create SMS Account and Enable Permissions
 
-登录阿里云控制台，进入“访问控制”页面：https://ram.console.aliyun.com/overview?activeTab=overview
+Login to Alibaba Cloud Console and go to the "Access Control" page: https://ram.console.aliyun.com/overview?activeTab=overview
 
-![步骤](images/alisms/sms-21.png)
-![步骤](images/alisms/sms-22.png)
-![步骤](images/alisms/sms-23.png)
-![步骤](images/alisms/sms-24.png)
-![步骤](images/alisms/sms-25.png)
+![Steps](images/alisms/sms-21.png)
+![Steps](images/alisms/sms-22.png)
+![Steps](images/alisms/sms-23.png)
+![Steps](images/alisms/sms-24.png)
+![Steps](images/alisms/sms-25.png)
 
-以上步骤，会得到access_key_id和access_key_secret，请把它写入到智控台参数，`aliyun.sms.access_key_id`、`aliyun.sms.access_key_secret`
-## 第四步 启动手机注册功能
+The above steps will generate access_key_id and access_key_secret. Please enter them into the control panel parameters `aliyun.sms.access_key_id` and `aliyun.sms.access_key_secret`
 
-1、正常来说，以上信息都填完后，会有这个效果，如果没有，可能缺少了某个步骤
+## Step 4: Enable Mobile Registration Feature
 
-![步骤](images/alisms/sms-31.png)
+1. Normally, after filling in all the above information, you should see this effect. If not, you may have missed a step.
 
-2、开启允许非管理员用户可注册，将参数`server.allow_user_register`设置成`true`
+![Steps](images/alisms/sms-31.png)
 
-3、开启手机注册功能，将参数`server.enable_mobile_register`设置成`true`
-![步骤](images/alisms/sms-32.png)
+2. Enable non-administrator user registration by setting the parameter `server.allow_user_register` to `true`
+
+3. Enable mobile registration feature by setting the parameter `server.enable_mobile_register` to `true`
+![Steps](images/alisms/sms-32.png)

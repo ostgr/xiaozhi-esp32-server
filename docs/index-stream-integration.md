@@ -1,83 +1,83 @@
-# IndexStreamTTS 使用指南
+# IndexStreamTTS Usage Guide
 
-## 环境准备
-### 1. 克隆项目 
+## Environment Preparation
+### 1. Clone Project 
 ```bash 
 git clone https://github.com/Ksuriuri/index-tts-vllm.git
 ```
-进入解压后的目录
+Enter the extracted directory
 ```bash
 cd index-tts-vllm
 ```
-切换到指定版本 (使用VLLM-0.10.2的历史版本)
+Switch to specified version (using historical version of VLLM-0.10.2)
 ```bash
 git checkout 224e8d5e5c8f66801845c66b30fa765328fd0be3
 ```
 
-### 2. 创建并激活 conda 环境
+### 2. Create and Activate conda Environment
 ```bash 
 conda create -n index-tts-vllm python=3.12
 conda activate index-tts-vllm
 ```
 
-### 3. 安装PyTorch 需要版本为2.8.0（最新版）
-#### 查看显卡最高支持的版本和实际安装的版本
+### 3. Install PyTorch (Version 2.8.0 required - latest version)
+#### Check the highest version supported by graphics card and actually installed version
 ```bash
 nvidia-smi
 nvcc --version
 ``` 
-#### 驱动支持的最高 CUDA 版本
+#### Highest CUDA version supported by driver
 ```bash
 CUDA Version: 12.8
 ```
-#### 实际安装的 CUDA 编译器版本
+#### Actually installed CUDA compiler version
 ```bash
 Cuda compilation tools, release 12.8, V12.8.89
 ```
-#### 那么对应的安装命令（pytorch默认给的是12.8的驱动版本）
+#### Corresponding installation command (pytorch defaults to 12.8 driver version)
 ```bash
 pip install torch torchvision
 ```
-需要 pytorch 版本 2.8.0（对应 vllm 0.10.2），具体安装指令请参考：[pytorch 官网](https://pytorch.org/get-started/locally/)
+Requires pytorch version 2.8.0 (corresponding to vllm 0.10.2), for specific installation instructions please refer to: [pytorch official website](https://pytorch.org/get-started/locally/)
 
-### 4. 安装依赖
+### 4. Install Dependencies
 ```bash 
 pip install -r requirements.txt
 ```
 
-### 5. 下载模型权重
-### 方案一：下载官方权重文件后转换
-此为官方权重文件，下载到本地任意路径即可，支持 IndexTTS-1.5 的权重  
+### 5. Download Model Weights
+### Option 1: Download official weight files then convert
+These are official weight files, download to any local path, supports IndexTTS-1.5 weights  
 | HuggingFace                                                   | ModelScope                                                          |
 |---------------------------------------------------------------|---------------------------------------------------------------------|
 | [IndexTTS](https://huggingface.co/IndexTeam/Index-TTS)        | [IndexTTS](https://modelscope.cn/models/IndexTeam/Index-TTS)        |
 | [IndexTTS-1.5](https://huggingface.co/IndexTeam/IndexTTS-1.5) | [IndexTTS-1.5](https://modelscope.cn/models/IndexTeam/IndexTTS-1.5) |
 
-下面以ModelScope的安装方法为例  
-#### 请注意：git需要安装并初始化启用lfs（如已安装可以跳过）
+Below is an example using ModelScope installation method  
+#### Please note: git needs to be installed and initialized with lfs enabled (skip if already installed)
 ```bash
 sudo apt-get install git-lfs
 git lfs install
 ```
-创建模型目录，并拉取模型
+Create model directory and pull model
 ```bash 
 mkdir model_dir
 cd model_dir
 git clone https://www.modelscope.cn/IndexTeam/IndexTTS-1.5.git
 ```
 
-#### 模型权重转换
+#### Model Weight Conversion
 ```bash 
 bash convert_hf_format.sh /path/to/your/model_dir
 ```
-例如：你下载的IndexTTS-1.5模型存放在model_dir目录下，则执行以下命令
+For example: if your downloaded IndexTTS-1.5 model is stored in the model_dir directory, execute the following command
 ```bash
 bash convert_hf_format.sh model_dir/IndexTTS-1.5
 ```
-此操作会将官方的模型权重转换为 transformers 库兼容的版本，保存在模型权重路径下的 vllm 文件夹中，方便后续 vllm 库加载模型权重
+This operation will convert official model weights to transformers library compatible version, saved in the vllm folder under the model weight path, convenient for subsequent vllm library to load model weights
 
-### 6. 更改接口适配一下项目
-接口返回数据与项目不适配需要调整一下，使其直接返回音频数据
+### 6. Modify Interface to Adapt to Project
+Interface return data is not compatible with project and needs adjustment to directly return audio data
 ```bash
 vi api_server.py
 ```
@@ -109,87 +109,87 @@ async def tts_api(request: Request):
         )
 ```
 
-### 7.编写sh启动脚本（请注意要在相应的conda环境下运行）
+### 7. Write sh startup script (Please note to run in corresponding conda environment)
 ```bash 
 vi start_api.sh
 ```
-### 将下面内容粘贴进去并按:输入wq保存  
-#### 脚本中的/home/system/index-tts-vllm/model_dir/IndexTTS-1.5 请自行修改为实际路径
+### Paste the following content and press : then input wq to save  
+#### Please modify /home/system/index-tts-vllm/model_dir/IndexTTS-1.5 in the script to actual path
 ```bash
-# 激活conda环境
+# Activate conda environment
 conda activate index-tts-vllm 
-echo "激活项目conda环境"
+echo "Activate project conda environment"
 sleep 2
-# 查找占用11996端口的进程号
+# Find process ID occupying port 11996
 PID_VLLM=$(sudo netstat -tulnp | grep 11996 | awk '{print $7}' | cut -d'/' -f1)
 
-# 检查是否找到进程号
+# Check if process ID was found
 if [ -z "$PID_VLLM" ]; then
-  echo "没有找到占用11996端口的进程"
+  echo "No process found occupying port 11996"
 else
-  echo "找到占用11996端口的进程，进程号为: $PID_VLLM"
-  # 先尝试普通kill，等待2秒
+  echo "Found process occupying port 11996, process ID: $PID_VLLM"
+  # Try normal kill first, wait 2 seconds
   kill $PID_VLLM
   sleep 2
-  # 检查进程是否还在
+  # Check if process is still running
   if ps -p $PID_VLLM > /dev/null; then
-    echo "进程仍在运行，强制终止..."
+    echo "Process still running, force terminate..."
     kill -9 $PID_VLLM
   fi
-  echo "已终止进程 $PID_VLLM"
+  echo "Terminated process $PID_VLLM"
 fi
 
-# 查找占用VLLM::EngineCore进程
+# Find VLLM::EngineCore processes
 GPU_PIDS=$(ps aux | grep -E "VLLM|EngineCore" | grep -v grep | awk '{print $2}')
 
-# 检查是否找到进程号
+# Check if process ID was found
 if [ -z "$GPU_PIDS" ]; then
-  echo "没有找到VLLM相关进程"
+  echo "No VLLM related processes found"
 else
-  echo "找到VLLM相关进程，进程号为: $GPU_PIDS"
-  # 先尝试普通kill，等待2秒
+  echo "Found VLLM related processes, process ID: $GPU_PIDS"
+  # Try normal kill first, wait 2 seconds
   kill $GPU_PIDS
   sleep 2
-  # 检查进程是否还在
+  # Check if process is still running
   if ps -p $GPU_PIDS > /dev/null; then
-    echo "进程仍在运行，强制终止..."
+    echo "Process still running, force terminate..."
     kill -9 $GPU_PIDS
   fi
-  echo "已终止进程 $GPU_PIDS"
+  echo "Terminated process $GPU_PIDS"
 fi
 
-# 创建tmp目录（如果不存在）
+# Create tmp directory (if not exists)
 mkdir -p tmp
 
-# 后台运行api_server.py，日志重定向到tmp/server.log
+# Run api_server.py in background, redirect logs to tmp/server.log
 nohup python api_server.py --model_dir /home/system/index-tts-vllm/model_dir/IndexTTS-1.5 --port 11996 > tmp/server.log 2>&1 &
-echo "api_server.py 已在后台运行，日志请查看 tmp/server.log"
+echo "api_server.py is running in background, check logs at tmp/server.log"
 ```
-给脚本执行权限并运行脚本
+Give script execution permission and run script
 ```bash 
 chmod +x start_api.sh
 ./start_api.sh
 ```
-日志会在tmp/server.log中输出，可以通过以下命令查看日志情况
+Logs will be output in tmp/server.log, you can view log status with the following command
 ```bash
 tail -f tmp/server.log
 ```
-如果显卡内存足够，可在脚本中添加启动参数 ----gpu_memory_utilization 来调整显存占用比例，默认值为 0.25
+If graphics card memory is sufficient, you can add startup parameter ----gpu_memory_utilization in the script to adjust memory usage ratio, default value is 0.25
 
-## 音色配置
-index-tts-vllm支持通过配置文件注册自定义音色，支持单音色和混合音色配置。  
-在项目根目录下的assets/speaker.json文件中配置自定义音色
-### 配置格式说明
+## Voice Configuration
+index-tts-vllm supports registering custom voices through configuration files, supports single voice and mixed voice configuration.  
+Configure custom voices in the assets/speaker.json file in the project root directory
+### Configuration Format Description
 ```bash
 {
-    "说话人名称1": [
-        "音频文件路径1.wav",
-        "音频文件路径2.wav"
+    "Speaker Name 1": [
+        "Audio file path 1.wav",
+        "Audio file path 2.wav"
     ],
-    "说话人名称2": [
-        "音频文件路径3.wav"
+    "Speaker Name 2": [
+        "Audio file path 3.wav"
     ]
 }
 ```
-### 注意 （配置角色后需重启服务进行音色注册）
-添加后需在智控台中添加相应的说话人（单模块则更换相应的voice）
+### Note (Service restart required for voice registration after configuring roles)
+After adding, you need to add corresponding speakers in the control panel (for single module, change corresponding voice)

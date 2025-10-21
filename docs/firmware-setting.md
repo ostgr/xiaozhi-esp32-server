@@ -1,54 +1,53 @@
-# 基于虾哥编译好的固件配置自定义服务器
+# Configure Custom Server Based on Brother Xia's Compiled Firmware
 
-## 第1步 确认版本
-烧录虾哥已经编译好的[1.6.1版本以上固件](https://github.com/78/xiaozhi-esp32/releases)
+## Step 1: Confirm Version
+Flash Brother Xia's pre-compiled [firmware version 1.6.1 or above](https://github.com/78/xiaozhi-esp32/releases)
 
-## 第2步 准备你的ota地址
-如果你按照教程使用的是全模块部署，就应该会有ota地址。
+## Step 2: Prepare Your OTA Address
+If you followed the tutorial and used full module deployment, you should have an OTA address.
 
-此刻，请你用浏览器打开你的ota地址，例如我的ota地址
+At this moment, please open your OTA address with a browser, for example, my OTA address:
 ```
 https://2662r3426b.vicp.fun/xiaozhi/ota/
 ```
 
-如果显示“OTA接口运行正常，websocket集群数量：X”。那就往下。
+If it displays "OTA interface is running normally, websocket cluster count: X", then proceed.
 
-如果显示“OTA接口运行不正常”，大概是你还没在`智控台`配置`Websocket`地址。那就：
+If it displays "OTA interface is not running normally", it's probably because you haven't configured the `Websocket` address in the `Control Panel`. Then:
 
-- 1、使用超级管理员登录智控台
+- 1. Login to the Control Panel as super administrator
 
-- 2、顶部菜单点击`参数管理`
+- 2. Click `Parameter Management` in the top menu
 
-- 3、在列表中找到`server.websocket`项目，输入你的`Websocket`地址。例如我的就是
+- 3. Find the `server.websocket` item in the list and enter your `Websocket` address. For example, mine is:
 
 ```
 wss://2662r3426b.vicp.fun/xiaozhi/v1/
 ```
 
-配置完后，再使用浏览器刷新你的ota接口地址，看看是不是正常了。如果还不正常就，就再次确认一下Websocket是否正常启动，是否配置了Websocket地址。
+After configuration, refresh your OTA interface address with the browser to see if it's normal. If it's still not normal, confirm again whether Websocket has started normally and whether the Websocket address is configured.
 
-## 第3步 进入配网模式
-进入机器的配网模式，在页面顶部，点击“高级选项”，在里面输入你服务器的`ota`地址，点击保存。重启设备
-![请参考-OTA地址设置](../docs/images/firmware-setting-ota.png)
+## Step 3: Enter Network Configuration Mode
+Enter the machine's network configuration mode, click "Advanced Options" at the top of the page, enter your server's `ota` address, click save, and restart the device.
+![Please refer to - OTA Address Setting](../docs/images/firmware-setting-ota.png)
 
-## 第4步 唤醒小智，查看日志输出
+## Step 4: Wake Up Xiaozhi and Check Log Output
 
-唤醒小智，看看日志是不是正常输出。
+Wake up Xiaozhi and see if the logs are output normally.
 
+## Common Issues
+Here are some common issues for reference:
 
-## 常见问题
-以下是一些常见问题，供参考：
+[1. Why does Xiaozhi recognize a lot of Korean, Japanese, and English when I speak?](./FAQ.md)
 
-[1、为什么我说的话，小智识别出来很多韩文、日文、英文](./FAQ.md)
+[2. Why does "TTS task error file does not exist" appear?](./FAQ.md)
 
-[2、为什么会出现“TTS 任务出错 文件不存在”？](./FAQ.md)
+[3. TTS often fails, often times out](./FAQ.md)
 
-[3、TTS 经常失败，经常超时](./FAQ.md)
+[4. Can connect to self-built server using Wifi, but can't connect in 4G mode](./FAQ.md)
 
-[4、使用Wifi能连接自建服务器，但是4G模式却接不上](./FAQ.md)
+[5. How to improve Xiaozhi's conversation response speed?](./FAQ.md)
 
-[5、如何提高小智对话响应速度？](./FAQ.md)
+[6. I speak slowly, Xiaozhi always interrupts when I pause](./FAQ.md)
 
-[6、我说话很慢，停顿时小智老是抢话](./FAQ.md)
-
-[7、我想通过小智控制电灯、空调、远程开关机等操作](./FAQ.md)
+[7. I want to control lights, air conditioning, remote power on/off through Xiaozhi](./FAQ.md)
