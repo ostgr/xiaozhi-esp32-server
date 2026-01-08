@@ -211,10 +211,10 @@ end_prompt:
 
 # Module selected for specific processing
 selected_module:
-  # Voice activity detection module, default uses SileroVAD model
-  VAD: SileroVAD
-  # Speech recognition module, default uses FunASR local model
-  ASR: FunASR
+  # Voice activity detection module, now uses Deepgram cloud VAD
+  VAD: DeepgramVAD
+  # Speech recognition module, now uses Deepgram cloud ASR with multilingual support
+  ASR: DeepgramStreamASR
   # Will call the actual LLM adapter based on the type corresponding to the configuration name
   LLM: ChatGLMLLM
   # Vision language model
@@ -287,10 +287,9 @@ Memory:
     llm: ChatGLMLLM
 
 ASR:
-  FunASR:
-    type: fun_local
-    model_dir: models/SenseVoiceSmall
-    output_dir: tmp/
+  # Local models removed - using Deepgram cloud ASR
+  # FunASR, FunASRServer, SherpaASR, VoskASR configs deleted
+
   FunASRServer:
     # Deploy FunASR independently, use FunASR API service with just five commands
     # First: mkdir -p ./funasr-runtime-resources/models
@@ -306,20 +305,7 @@ ASR:
     is_ssl: true
     api_key: none
     output_dir: tmp/
-  SherpaASR:
-    # Sherpa-ONNX local speech recognition (requires manual model download)
-    type: sherpa_onnx_local
-    model_dir: models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17
-    output_dir: tmp/
-    # Model type: sense_voice (multilingual) or paraformer (Chinese-specific)
-    model_type: sense_voice
-  SherpaParaformerASR:
-    # Chinese speech recognition model, can run on low-performance devices (requires manual model download, e.g., RK3566-2g)
-    # For detailed configuration, see: docs/sherpa-paraformer-guide.md
-    type: sherpa_onnx_local
-    model_dir: models/sherpa-onnx-paraformer-zh-small-2024-03-09
-    output_dir: tmp/
-    model_type: paraformer
+  # SherpaASR and SherpaParaformerASR removed - local models deleted
   DoubaoASR:
     # Apply for API keys here
     # https://console.volcengine.com/speech/app
@@ -533,12 +519,7 @@ ASR:
     # language_hints: ["zh", "en"]  # Specify language (optional), supports zh, en, ja, yue, ko, de, fr, ru
     output_dir: tmp/
 VAD:
-  SileroVAD:
-    type: silero
-    threshold: 0.5
-    threshold_low: 0.3
-    model_dir: models/snakers4_silero-vad
-    min_silence_duration_ms: 200  # If speech pause is long, increase this value
+  # SileroVAD removed - local model deleted, now using Deepgram cloud VAD
   DeepgramVAD:
     # Deepgram VAD wrapper - delegates to DeepgramStreamASR provider
     type: deepgram_vad
