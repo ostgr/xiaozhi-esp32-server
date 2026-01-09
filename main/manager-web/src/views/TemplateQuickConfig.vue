@@ -62,7 +62,7 @@ import agentApi from '@/apis/module/agent';
 
 // 默认模型配置常量
 const DEFAULT_MODEL_CONFIG = {
-  ttsModelId: "TTS_EdgeTTS",
+  ttsModelId: "TTS_ElevenLabsStreamTTS",
   vadModelId: "VAD_SileroVAD",
   asrModelId: "ASR_FunASR",
   llmModelId: "LLM_ChatGLMLLM",

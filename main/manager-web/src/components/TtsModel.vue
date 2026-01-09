@@ -185,7 +185,8 @@ export default {
     updateShowReferenceColumns() {
       if (this.modelConfig && this.modelConfig.configJson) {
         const providerType = this.modelConfig.configJson.type;
-        this.showReferenceColumns = ['fishspeech', 'gpt_sovits_v2', 'gpt_sovits_v3', 'elevenlabs_stream'].includes(providerType);
+        // Only ElevenLabs supports voice cloning now
+        this.showReferenceColumns = providerType === 'elevenlabs_stream';
       } else {
         this.showReferenceColumns = false;
       }
