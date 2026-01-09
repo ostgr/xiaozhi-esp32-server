@@ -78,7 +78,14 @@ class TTSProvider(TTSProviderBase):
         if model_key_msg:
             logger.bind(tag=TAG).error(model_key_msg)
 
-        logger.bind(tag=TAG).info(f"ElevenLabs TTS initialized with mode: {self.interface_type.value}")
+        logger.bind(tag=TAG).info(
+            f"ElevenLabs TTS initialized | "
+            f"mode={self.interface_type.value} | "
+            f"voice_id={self.voice_id} | "
+            f"model={self.model_id} | "
+            f"output_format={self.output_format} | "
+            f"ws_reuse={self.enable_ws_reuse}"
+        )
 
     def _build_api_urls(self):
         """Build ElevenLabs API URLs"""
@@ -160,6 +167,15 @@ class TTSProvider(TTSProviderBase):
 
             # Start monitor task
             if self._monitor_task is None or self._monitor_task.done():
+                if self._monitor_task and self._monitor_task.done():
+                    # Check if previous task crashed
+                    try:
+                        exc = self._monitor_task.exception()
+                        if exc:
+                            logger.bind(tag=TAG).error(f"[MONITOR] Previous monitor task failed: {exc}")
+                    except Exception:
+                        pass
+
                 logger.bind(tag=TAG).debug("Starting response monitor task...")
                 self._monitor_task = asyncio.create_task(
                     self._start_monitor_tts_response()
@@ -530,11 +546,33 @@ class TTSProvider(TTSProviderBase):
 
     async def _start_monitor_tts_response(self):
         """Monitor ElevenLabs WebSocket responses"""
+        logger.bind(tag=TAG).debug("[MONITOR] Monitor task started")
         try:
             while not self.conn.stop_event.is_set():
                 try:
-                    msg = await self.ws.recv()
+                    log_msg = "[MONITOR] Waiting for WebSocket message (timeout: 60s)"
+                    logger.bind(tag=TAG).debug(log_msg)
+                    try:
+                        msg = await asyncio.wait_for(self.ws.recv(), timeout=60)
+                    except asyncio.TimeoutError:
+                        msg_text = (
+                            "[MONITOR] WebSocket recv timeout - "
+                            "no audio from ElevenLabs in 60s"
+                        )
+                        logger.bind(tag=TAG).warning(msg_text)
+                        raise
+                    msg_len = len(msg)
+                    msg_preview = msg[:200]
+                    log_msg = (
+                        f"[WS_RECV] Received: {msg_len} bytes, "
+                        f"preview: {msg_preview}"
+                    )
+                    logger.bind(tag=TAG).debug(log_msg)
                     data = json.loads(msg)
+                    keys = list(data.keys())
+                    logger.bind(tag=TAG).debug(
+                        f"[WS_RECV] Parsed keys: {keys}"
+                    )
 
                     if self.conn.client_abort:
                         logger.bind(tag=TAG).debug("Client abort detected, stopping monitor")
@@ -542,10 +580,38 @@ class TTSProvider(TTSProviderBase):
 
                     # Handle audio response
                     if "audio" in data and data["audio"]:
-                        audio_bytes = base64.b64decode(data["audio"])
-                        # Convert PCM to Opus and push to queue
-                        self.opus_encoder.encode_pcm_to_opus_stream(
-                            audio_bytes, False, callback=self.handle_opus
+                        audio_len = len(data['audio'])
+                        logger.bind(tag=TAG).debug(
+                            f"[AUDIO_RECV] Found {audio_len} base64 chars"
+                        )
+                        try:
+                            audio_bytes = base64.b64decode(
+                                data["audio"]
+                            )
+                            pcm_len = len(audio_bytes)
+                            logger.bind(tag=TAG).debug(
+                                f"[AUDIO_RECV] Decoded {pcm_len} PCM bytes"
+                            )
+                            # Convert PCM to Opus and push to queue
+                            self.opus_encoder.encode_pcm_to_opus_stream(
+                                audio_bytes, False,
+                                callback=self.handle_opus
+                            )
+                            logger.bind(tag=TAG).debug(
+                                "[AUDIO_RECV] Sent to Opus encoder"
+                            )
+                        except Exception as e:
+                            logger.bind(tag=TAG).error(
+                                f"[AUDIO_RECV] Failed: {e}"
+                            )
+                            raise
+                    elif "audio" in data:
+                        logger.bind(tag=TAG).warning(
+                            "[AUDIO_RECV] Audio field empty"
+                        )
+                    else:
+                        logger.bind(tag=TAG).debug(
+                            "[AUDIO_RECV] No audio field in message"
                         )
 
                     # Handle alignment info (for sentence tracking)
