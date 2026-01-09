@@ -84,13 +84,25 @@ class TTSProviderBase(ABC):
 
     def to_tts_stream(self, text, opus_handler: Callable[[bytes], None] = None) -> None:
         text = MarkdownCleaner.clean_markdown(text)
+        logger.bind(tag=TAG).debug(
+            f"[TTS STREAMING] Converting to TTS stream: {text[:80]}... (mode=stream)"
+        )
         max_repeat_time = 5
         if self.delete_audio_file:
             # 需要删除文件的直接转为音频数据
+            logger.bind(tag=TAG).debug(
+                f"[TTS STREAMING] Using memory mode (delete_audio_file=True)"
+            )
             while max_repeat_time > 0:
                 try:
+                    logger.bind(tag=TAG).debug(
+                        f"[TTS STREAMING] Attempt {5 - max_repeat_time + 1}: calling text_to_speak()"
+                    )
                     audio_bytes = asyncio.run(self.text_to_speak(text, None))
                     if audio_bytes:
+                        logger.bind(tag=TAG).info(
+                            f"[TTS STREAMING] Received audio bytes: {len(audio_bytes)} bytes"
+                        )
                         self.tts_audio_queue.put((SentenceType.FIRST, None, text))
                         audio_bytes_to_data_stream(
                             audio_bytes,
@@ -98,21 +110,27 @@ class TTSProviderBase(ABC):
                             is_opus=True,
                             callback=opus_handler,
                         )
+                        logger.bind(tag=TAG).info(
+                            f"[TTS STREAMING] Successfully converted to Opus stream: {text}"
+                        )
                         break
                     else:
                         max_repeat_time -= 1
+                        logger.bind(tag=TAG).warning(
+                            f"[TTS STREAMING] No audio bytes returned (attempt {5 - max_repeat_time})"
+                        )
                 except Exception as e:
                     logger.bind(tag=TAG).warning(
-                        f"语音生成失败{5 - max_repeat_time + 1}次: {text}，错误: {e}"
+                        f"[TTS STREAMING] Attempt {5 - max_repeat_time + 1} failed: {text}, error: {e}"
                     )
                     max_repeat_time -= 1
             if max_repeat_time > 0:
                 logger.bind(tag=TAG).info(
-                    f"语音生成成功: {text}，重试{5 - max_repeat_time}次"
+                    f"[TTS STREAMING] Successfully generated audio: {text}"
                 )
             else:
                 logger.bind(tag=TAG).error(
-                    f"语音生成失败: {text}，请检查网络或服务是否正常"
+                    f"[TTS STREAMING] Failed to generate audio after 5 attempts: {text}"
                 )
             return None
         else:

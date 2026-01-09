@@ -76,11 +76,23 @@ class TTSProvider(TTSProviderBase):
             params.append(f"language_code={self.language_code}")
         self.ws_url = f"{base_url}?{'&'.join(params)}"
 
+    async def _is_connection_healthy(self) -> bool:
+        """Check if WebSocket connection is alive and usable"""
+        if self.ws is None:
+            return False
+        try:
+            # Check connection state (state 1 = OPEN, state 3 = CLOSED)
+            return self.ws.state.value == 1
+        except Exception:
+            return False
+
     async def open_audio_channels(self, conn):
         try:
             await super().open_audio_channels(conn)
         except Exception as e:
-            logger.bind(tag=TAG).error(f"Failed to open audio channels: {str(e)}")
+            logger.bind(tag=TAG).error(
+                f"Failed to open audio channels: {str(e)}"
+            )
             self.ws = None
             raise
 
@@ -103,7 +115,10 @@ class TTSProvider(TTSProviderBase):
             self.ws = await websockets.connect(
                 self.ws_url,
                 additional_headers=headers,
-                max_size=10000000
+                max_size=10000000,
+                ping_interval=30,
+                ping_timeout=10,
+                close_timeout=10
             )
             logger.bind(tag=TAG).debug("WebSocket connection established")
 
@@ -240,9 +255,12 @@ class TTSProvider(TTSProviderBase):
     async def text_to_speak(self, text, _):
         """Send text to ElevenLabs TTS stream"""
         try:
-            if self.ws is None:
-                logger.bind(tag=TAG).warning("WebSocket connection does not exist, aborting text send")
-                return
+            # Check connection health before sending
+            if not await self._is_connection_healthy():
+                logger.bind(tag=TAG).warning(
+                    "Connection unhealthy, attempting reconnection..."
+                )
+                await self._ensure_connection()
 
             # Clean markdown from text
             filtered_text = MarkdownCleaner.clean_markdown(text)
@@ -259,7 +277,7 @@ class TTSProvider(TTSProviderBase):
             if self.ws:
                 try:
                     await self.ws.close()
-                except:
+                except Exception:
                     pass
                 self.ws = None
             raise
@@ -352,20 +370,28 @@ class TTSProvider(TTSProviderBase):
                     # Handle alignment info (for sentence tracking)
                     if "alignment" in data:
                         alignment = data["alignment"]
-                        if "chars" in alignment:
+                        if alignment and "chars" in alignment:
                             chars = alignment["chars"]
                             if chars:
-                                text = "".join([c.get("char", "") for c in chars])
+                                # chars can be string or list of dicts
+                                if isinstance(chars, str):
+                                    text = chars
+                                else:
+                                    text = "".join([c.get("char", "") if isinstance(c, dict) else str(c) for c in chars])
                                 if text.strip():
                                     logger.bind(tag=TAG).debug(f"Alignment received: {text}")
 
                     # Handle normalizedAlignment for word-level tracking
                     if "normalizedAlignment" in data:
                         normalized = data["normalizedAlignment"]
-                        if "chars" in normalized:
+                        if normalized and "chars" in normalized:
                             chars = normalized["chars"]
                             if chars:
-                                text = "".join([c.get("char", "") for c in chars])
+                                # chars can be string or list of dicts
+                                if isinstance(chars, str):
+                                    text = chars
+                                else:
+                                    text = "".join([c.get("char", "") if isinstance(c, dict) else str(c) for c in chars])
                                 if text.strip():
                                     self.tts_audio_queue.put(
                                         (SentenceType.FIRST, [], text)
@@ -380,18 +406,36 @@ class TTSProvider(TTSProviderBase):
                             break
 
                 except websockets.ConnectionClosed:
-                    logger.bind(tag=TAG).warning("WebSocket connection closed")
+                    logger.bind(tag=TAG).warning(
+                        "WebSocket connection closed"
+                    )
+                    self.ws = None
+                    if self.enable_ws_reuse:
+                        # Try to reconnect in reuse mode
+                        try:
+                            logger.bind(tag=TAG).info(
+                                "Attempting reconnection..."
+                            )
+                            await self._ensure_connection()
+                            logger.bind(tag=TAG).info(
+                                "Reconnection successful"
+                            )
+                            continue  # Continue monitoring with new connection
+                        except Exception as e:
+                            logger.bind(tag=TAG).error(
+                                f"Reconnection failed: {e}"
+                            )
                     break
                 except Exception as e:
                     logger.bind(tag=TAG).error(f"Monitor error: {e}")
                     traceback.print_exc()
                     break
 
-            # Close WebSocket on exit
-            if self.ws:
+            # Close WebSocket on exit only if not reusing
+            if self.ws and not self.enable_ws_reuse:
                 try:
                     await self.ws.close()
-                except:
+                except Exception:
                     pass
                 self.ws = None
         finally:

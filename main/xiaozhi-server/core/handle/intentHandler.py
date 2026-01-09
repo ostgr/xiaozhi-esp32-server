@@ -189,19 +189,43 @@ async def process_intent_result(conn, intent_result, original_text):
 
 
 def speak_txt(conn, text):
-    conn.tts.tts_text_queue.put(
-        TTSMessageDTO(
-            sentence_id=conn.sentence_id,
-            sentence_type=SentenceType.FIRST,
-            content_type=ContentType.ACTION,
-        )
+    """
+    Queue text for TTS processing
+    Logs: Text content, queue operations, and TTS streaming stages
+    """
+    conn.logger.bind(tag=TAG).info(
+        f"[TTS STREAMING] Starting TTS for text (len={len(text)}): {text[:100]}{'...' if len(text) > 100 else ''}"
     )
+
+    # Queue FIRST marker
+    first_msg = TTSMessageDTO(
+        sentence_id=conn.sentence_id,
+        sentence_type=SentenceType.FIRST,
+        content_type=ContentType.ACTION,
+    )
+    conn.tts.tts_text_queue.put(first_msg)
+    conn.logger.bind(tag=TAG).debug(
+        f"[TTS STREAMING] Queued FIRST marker (sentence_id={conn.sentence_id})"
+    )
+
+    # Queue text chunks
+    conn.logger.bind(tag=TAG).debug(f"[TTS STREAMING] Processing text: {text}")
     conn.tts.tts_one_sentence(conn, ContentType.TEXT, content_detail=text)
-    conn.tts.tts_text_queue.put(
-        TTSMessageDTO(
-            sentence_id=conn.sentence_id,
-            sentence_type=SentenceType.LAST,
-            content_type=ContentType.ACTION,
-        )
+    conn.logger.bind(tag=TAG).debug(f"[TTS STREAMING] Text chunked and queued")
+
+    # Queue LAST marker
+    last_msg = TTSMessageDTO(
+        sentence_id=conn.sentence_id,
+        sentence_type=SentenceType.LAST,
+        content_type=ContentType.ACTION,
     )
+    conn.tts.tts_text_queue.put(last_msg)
+    conn.logger.bind(tag=TAG).debug(
+        f"[TTS STREAMING] Queued LAST marker (sentence_id={conn.sentence_id})"
+    )
+
+    # Add to dialogue history
     conn.dialogue.put(Message(role="assistant", content=text))
+    conn.logger.bind(tag=TAG).info(
+        f"[TTS STREAMING] Completed TTS queueing for: {text[:50]}..."
+    )

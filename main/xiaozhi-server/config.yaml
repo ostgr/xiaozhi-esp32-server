@@ -47,7 +47,7 @@ log:
   # Set log file output format: time, log level, tag, message
   log_format_file: "{time:YYYY-MM-DD HH:mm:ss} - {version}_{selected_module} - {name} - {level} - {extra[tag]} - {message}"
   # Set log level: INFO, DEBUG
-  log_level: INFO
+  log_level: DEBUG
   # Set log directory path
   log_dir: tmp
   # Set log file name
@@ -740,8 +740,8 @@ TTS:
     # ElevenLabs API key, obtain from https://elevenlabs.io/app/settings/api-keys
     api_key: sk_d455b25f6ef58bfd92d81ded5ffe7cd58ba235c3bb1174e5
     # Voice ID - select or clone voice at https://elevenlabs.io/voice-library
-    # Vietnamese voice: d5HVupAWCwe4e6GvMCAL
-    voice_id: d5HVupAWCwe4e6GvMCAL
+    # Vietnamese voice: 558B1EcdabtcSdleer40
+    voice_id: 558B1EcdabtcSdleer40
     # Model selection:
     # - eleven_multilingual_v2: Highest quality, supports 29 languages (recommended)
     # - eleven_turbo_v2_5: Fast generation, low latency

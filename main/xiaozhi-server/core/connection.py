@@ -858,14 +858,16 @@ class ConnectionHandler:
                         memory_str, self.config.get("voiceprint", {})
                     ),
                 )
+            self.logger.bind(tag=TAG).debug(f"LLM response generator created")
         except Exception as e:
-            self.logger.bind(tag=TAG).error(f"LLM 处理出错 {query}: {e}")
+            self.logger.bind(tag=TAG).error(f"LLM error {query}: {e}")
+            traceback.print_exc()
             return None
 
-        # 处理流式响应
+        # Process streaming response
         tool_call_flag = False
-        # 支持多个并行工具调用 - 使用列表存储
-        tool_calls_list = []  # 格式: [{"id": "", "name": "", "arguments": ""}]
+        # Support multiple parallel tool calls - use list
+        tool_calls_list = []  # Format: [{"id": "", "name": "", "arguments": ""}]
         content_arguments = ""
         self.client_abort = False
         emotion_flag = True
@@ -879,6 +881,7 @@ class ConnectionHandler:
                     tools_call = None
                 if content is not None and len(content) > 0:
                     content_arguments += content
+                    self.logger.bind(tag=TAG).debug(f"LLM response chunk: {content}")
 
                 if not tool_call_flag and content_arguments.startswith("<tool_call>"):
                     # print("content_arguments", content_arguments)
