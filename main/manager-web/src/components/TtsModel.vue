@@ -185,7 +185,7 @@ export default {
     updateShowReferenceColumns() {
       if (this.modelConfig && this.modelConfig.configJson) {
         const providerType = this.modelConfig.configJson.type;
-        this.showReferenceColumns = ['fishspeech', 'gpt_sovits_v2', 'gpt_sovits_v3'].includes(providerType);
+        this.showReferenceColumns = ['fishspeech', 'gpt_sovits_v2', 'gpt_sovits_v3', 'elevenlabs_stream'].includes(providerType);
       } else {
         this.showReferenceColumns = false;
       }

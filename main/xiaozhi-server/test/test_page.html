@@ -1,29 +1,29 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小智服务器测试页面</title>
+    <title>Xiaozhi Server Test Page</title>
     <link rel="stylesheet" href="css/test_page.css">
     <script>
-        // 检测是否使用file://协议打开
+        // Detect if opened using file:// protocol
         if (window.location.protocol === 'file:') {
             document.addEventListener('DOMContentLoaded', function () {
-                // 创建警告框
+                // Create warning box
                 const warningDiv = document.createElement('div');
                 warningDiv.id = 'fileProtocolWarning';
                 warningDiv.innerHTML = `
-                    <h2>⚠️ 警告：请使用HTTP服务器打开此页面</h2>
-                    <p>您当前使用的是本地文件方式打开页面（file://协议），这可能导致页面功能异常。</p>
-                    <p>您可以使用nginx映射启动测试页面，也可以请按照以下步骤使用python启动测试http服务：</p>
+                    <h2>⚠️ Warning: Please use an HTTP server to open this page</h2>
+                    <p>You are currently using the local file method to open the page (file:// protocol), which may cause page malfunctions.</p>
+                    <p>You can use nginx mapping to start the test page, or follow these steps to start a test HTTP server using Python:</p>
                     <ol>
-                        <li>打开命令行终端</li>
-                        <li>命令行进入到 xiaozhi-server/test 目录</li>
-                        <li>执行以下命令启动HTTP服务器：</li>
+                        <li>Open a command line terminal</li>
+                        <li>Navigate to the xiaozhi-server/test directory in the command line</li>
+                        <li>Execute the following command to start the HTTP server:</li>
                     </ol>
                     <pre>python -m http.server 8006</pre>
-                    <p>然后在浏览器中访问：<strong>http://localhost:8006/test_page.html</strong></p>
+                    <p>Then visit in your browser: <strong>http://localhost:8006/test_page.html</strong></p>
                 `;
                 document.body.appendChild(warningDiv);
             });
@@ -34,57 +34,57 @@
 <body>
     <div class="container">
         <div id="scriptStatus" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-            正在加载Opus库...
+            Loading Opus library...
         </div>
 
-        <!-- 两栏布局：设备配置和连接信息 -->
+        <!-- Two-column layout: Device configuration and connection info -->
         <div class="two-column-layout">
-            <!-- 设备配置面板 -->
+            <!-- Device configuration panel -->
             <div class="section">
                 <h2>
-                    设备配置
-                    <button class="toggle-button" id="toggleConfig">编辑</button>
+                    Device Configuration
+                    <button class="toggle-button" id="toggleConfig">Edit</button>
                 </h2>
                 <div class="config-panel" id="configPanel">
                     <div class="control-panel">
                         <div class="config-row">
                             <div class="config-item">
-                                <label for="deviceMac">设备MAC:</label>
+                                <label for="deviceMac">Device MAC:</label>
                                 <input type="text" id="deviceMac" placeholder="device-id" disabled>
                             </div>
                             <div class="config-item">
-                                <label for="clientId">客户端ID:</label>
+                                <label for="clientId">Client ID:</label>
                                 <input type="text" id="clientId" value="web_test_client" placeholder="client-id"
                                     disabled>
                             </div>
                         </div>
                         <div class="config-row">
                             <div class="config-item">
-                                <label for="deviceName">设备名称:</label>
-                                <input type="text" id="deviceName" value="Web测试设备" placeholder="deviceName" disabled>
+                                <label for="deviceName">Device Name:</label>
+                                <input type="text" id="deviceName" value="Web Test Device" placeholder="deviceName" disabled>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 连接信息面板 -->
+            <!-- Connection info panel -->
             <div class="section">
                 <h2>
-                    连接信息
+                    Connection Info
                     <span class="connection-status">
-                        <span id="otaStatus" class="status">● OTA未连接</span>
-                        <span id="connectionStatus" class="status">● WS未连接</span>
+                        <span id="otaStatus" class="status">● OTA Disconnected</span>
+                        <span id="connectionStatus" class="status">● WS Disconnected</span>
                     </span>
                     <button class="connect-button" id="connectButton">
                         <span>●</span>
-                        连接
+                        Connect
                     </button>
                 </h2>
                 <div class="connection-controls">
                     <input type="text" id="otaUrl" value="http://127.0.0.1:8002/xiaozhi/ota/"
-                        placeholder="OTA服务器地址，如：http://127.0.0.1:8002/xiaozhi/ota/" />
-                    <input type="text" id="serverUrl" value="" readonly disabled placeholder="点击连接按钮后，自动从OTA接口获取" />
+                        placeholder="OTA server address, e.g.: http://127.0.0.1:8002/xiaozhi/ota/" />
+                    <input type="text" id="serverUrl" value="" readonly disabled placeholder="Auto-retrieved from OTA endpoint after clicking connect button" />
                 </div>
             </div>
 
@@ -92,20 +92,20 @@
 
         <div class="section">
             <div class="tabs">
-                <button class="tab active" data-tab="text">文本消息</button>
-                <button class="tab" data-tab="voice">语音消息</button>
+                <button class="tab active" data-tab="text">Text Message</button>
+                <button class="tab" data-tab="voice">Voice Message</button>
             </div>
 
             <div class="tab-content active" id="textTab">
                 <div class="message-input">
-                    <input type="text" id="messageInput" placeholder="输入消息..." disabled>
-                    <button id="sendTextButton" disabled>发送</button>
+                    <input type="text" id="messageInput" placeholder="Enter message..." disabled>
+                    <button id="sendTextButton" disabled>Send</button>
                 </div>
             </div>
 
             <div class="tab-content" id="voiceTab">
                 <div class="audio-controls">
-                    <button id="recordButton" class="record-button" disabled>开始录音</button>
+                    <button id="recordButton" class="record-button" disabled>Start Recording</button>
                 </div>
                 <canvas id="audioVisualizer" class="audio-visualizer"></canvas>
             </div>
@@ -115,47 +115,47 @@
                     <span id="sessionStatus" class="status offline" style="position: relative; display: inline-block;">
                         <span id="sessionStatusBg"
                             style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: linear-gradient(90deg, rgba(76, 175, 80, 0.2), rgba(33, 150, 243, 0.2)); transition: width 0.15s ease-out, background 0.3s ease; z-index: 0; border-radius: 20px;"></span>
-                        <span style="position: relative; z-index: 1;"><span class="emoji-large">😶</span> 小智离线中</span>
+                        <span style="position: relative; z-index: 1;"><span class="emoji-large">😶</span> Xiaozhi Offline</span>
                     </span>
                 </span>
             </div>
             <div class="flex-container">
                 <div id="conversation" class="conversation"></div>
                 <div id="logContainer">
-                    <div class="log-entry log-info">准备就绪，请连接服务器开始测试...</div>
+                    <div class="log-entry log-info">Ready. Please connect to server to start testing...</div>
                 </div>
             </div>
         </div>
 
-        <!-- MCP 工具管理区域 -->
+        <!-- MCP Tools Management Area -->
         <div class="section">
             <h2>
-                MCP 工具管理
+                MCP Tools Management
                 <span class="connection-status">
-                    <span id="mcpToolsCount">0 个工具</span>
+                    <span id="mcpToolsCount">0 tools</span>
                 </span>
-                <button class="toggle-button" id="toggleMcpTools">展开</button>
+                <button class="toggle-button" id="toggleMcpTools">Expand</button>
             </h2>
             <div class="config-panel" id="mcpToolsPanel">
                 <div id="mcpToolsContainer" class="mcp-tools-container">
-                    <!-- 工具列表将动态插入这里 -->
+                    <!-- Tool list will be dynamically inserted here -->
                 </div>
                 <div style="text-align: center; padding: 15px 0;">
                     <button class="btn" id="addMcpToolBtn" style="background-color: #4caf50;">
-                        ➕ 添加新工具
+                        ➕ Add New Tool
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- MCP 工具编辑模态框 -->
+        <!-- MCP Tool Edit Modal -->
         <div id="mcpToolModal"
             style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; overflow-y: auto;">
             <div
                 style="background-color: white; border-radius: 10px; padding: 25px; width: 90%; max-width: 700px; margin: 50px auto; max-height: 85vh; overflow-y: auto;">
                 <div
                     style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
-                    <h2 id="mcpModalTitle" style="font-size: 20px; font-weight: bold; color: #333; margin: 0;">添加工具</h2>
+                    <h2 id="mcpModalTitle" style="font-size: 20px; font-weight: bold; color: #333; margin: 0;">Add Tool</h2>
                     <button id="closeMcpModalBtn"
                         style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 30px; height: 30px;">&times;</button>
                 </div>
@@ -165,32 +165,32 @@
                 <form id="mcpToolForm">
                     <div style="margin-bottom: 20px;">
                         <label
-                            style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">工具名称
+                            style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">Tool Name
                             *</label>
-                        <input type="text" id="mcpToolName" placeholder="例如: self.get_device_status" required
+                        <input type="text" id="mcpToolName" placeholder="e.g., self.get_device_status" required
                             style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                     </div>
 
                     <div style="margin-bottom: 20px;">
                         <label
-                            style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">工具描述
+                            style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">Tool Description
                             *</label>
-                        <textarea id="mcpToolDescription" placeholder="详细描述工具的功能和使用场景..." required
+                        <textarea id="mcpToolDescription" placeholder="Describe the tool's functionality and use cases in detail..." required
                             style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; min-height: 80px; resize: vertical;"></textarea>
                     </div>
 
                     <div style="margin-bottom: 20px;">
                         <label
-                            style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">输入参数</label>
+                            style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">Input Parameters</label>
                         <div
                             style="background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; padding: 15px;">
                             <div id="mcpPropertiesContainer">
                                 <div style="text-align: center; padding: 20px; color: #999; font-size: 14px;">
-                                    暂无参数，点击下方按钮添加参数</div>
+                                    No parameters yet, click button below to add parameter</div>
                             </div>
                             <button type="button" id="addMcpPropertyBtn"
                                 style="width: 100%; margin-top: 10px; padding: 8px 15px; border: none; border-radius: 5px; background-color: #2196f3; color: white; cursor: pointer; font-size: 14px;">
-                                ➕ 添加参数
+                                ➕ Add Parameter
                             </button>
                         </div>
                     </div>
@@ -198,31 +198,31 @@
                     <div style="margin-bottom: 20px;">
                         <label
                             style="display: block; margin-bottom: 8px; font-weight: 500; color: #333; font-size: 14px;">
-                            模拟返回结果 (JSON 格式，可选)
-                            <span style="font-size: 12px; color: #999; font-weight: normal;">- 留空则返回默认成功消息</span>
+                            Mock Return Result (JSON format, optional)
+                            <span style="font-size: 12px; color: #999; font-weight: normal;">- Leave empty to return default success message</span>
                         </label>
-                        <textarea id="mcpMockResponse" placeholder='{"success": true, "data": "执行成功"}'
+                        <textarea id="mcpMockResponse" placeholder='{"success": true, "data": "Executed successfully"}'
                             style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 13px; font-family: 'Courier New', monospace; min-height: 100px; resize: vertical;"></textarea>
                         <div style="font-size: 12px; color: #666; margin-top: 4px;">
-                            💡 提示：如果设置了模拟返回结果，工具调用时将返回这个 JSON 对象
+                            💡 Tip: If a mock return result is set, the tool will return this JSON object when called
                         </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
                         <button type="button" id="cancelMcpBtn"
-                            style="padding: 8px 15px; border: none; border-radius: 5px; background-color: #9e9e9e; color: white; cursor: pointer; font-size: 14px;">取消</button>
+                            style="padding: 8px 15px; border: none; border-radius: 5px; background-color: #9e9e9e; color: white; cursor: pointer; font-size: 14px;">Cancel</button>
                         <button type="submit"
-                            style="padding: 8px 15px; border: none; border-radius: 5px; background-color: #4caf50; color: white; cursor: pointer; font-size: 14px;">保存</button>
+                            style="padding: 8px 15px; border: none; border-radius: 5px; background-color: #4caf50; color: white; cursor: pointer; font-size: 14px;">Save</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Opus解码库 -->
+    <!-- Opus decoder library -->
     <script src="js/utils/libopus.js"></script>
 
-    <!-- 主应用入口 -->
+    <!-- Main application entry -->
     <script type="module" src="js/app.js"></script>
 </body>
 
