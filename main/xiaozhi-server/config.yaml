@@ -115,7 +115,7 @@ wakeup_words:
   - "小冰小冰"
 # MCP endpoint address, format: ws://your_mcp_endpoint_ip_or_domain:port/mcp/?token=your_token
 # Detailed tutorial: https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/mcp-endpoint-integration.md
-mcp_endpoint: your_endpoint_websocket_address
+mcp_endpoint: ws://localhost:8000/xiaozhi/v1/
 
 # Context provider configuration
 # Used to inject dynamic data in system prompts, such as health data, stock information, etc.
@@ -216,9 +216,9 @@ selected_module:
   # Speech recognition module, now uses Deepgram cloud ASR with multilingual support
   ASR: DeepgramStreamASR
   # Will call the actual LLM adapter based on the type corresponding to the configuration name
-  LLM: ChatGLMLLM
+  LLM: QwenMegaLLM
   # Vision language model
-  VLLM: ChatGLMVLLM
+  VLLM: QwenMegaLLM
   # TTS will call the actual TTS adapter based on the type corresponding to the configuration name
   TTS: ElevenLabsTTS
   # Memory module, memory is disabled by default. For ultra-long memory, recommend mem0ai. For privacy-focused, use local mem_local_short
@@ -242,7 +242,7 @@ Intent:
     # Dedicated thinking model for intent recognition
     # If not filled here, will default to using selected_module.LLM model as the thinking model for intent recognition
     # If you don't want to use selected_module.LLM for intent recognition, it's better to use an independent LLM, such as the free ChatGLMLLM
-    llm: ChatGLMLLM
+    llm: QwenMegaLLM
     # Modules under plugins_func/functions can be configured to select which module to load. After loading, conversation supports corresponding function calls
     # System has already loaded "handle_exit_intent" and "play_music" plugins by default, do not reload
     # Below are examples of loading weather, role switching, and news plugins
@@ -284,7 +284,7 @@ Memory:
     # Dedicated thinking model for memory storage
     # If not filled here, will default to using selected_module.LLM model as the thinking model for memory storage
     # If you don't want to use selected_module.LLM for memory storage, it's better to use an independent LLM, such as the free ChatGLMLLM
-    llm: ChatGLMLLM
+    llm: QwenMegaLLM
 
 ASR:
   # Local models removed - using Deepgram cloud ASR
@@ -527,6 +527,12 @@ VAD:
 LLM:
   # All OpenAI-type configurations can modify hyperparameters, using AliLLM as an example
   # Currently supported types: openai, dify, ollama. You can adapt others yourself
+  QwenMegaLLM:
+    type: openai
+    base_url: https://ai.megallm.io/v1
+    model_name: openai-gpt-oss-20b
+    api_key: sk-mega-0b180738b1065b5e75857bc622d46a574841ed13a2e8d20e01862eb3dbaf321a
+
   AliLLM:
     # Define LLM API type
     type: openai

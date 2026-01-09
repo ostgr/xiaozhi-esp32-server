@@ -1,6 +1,6 @@
-// 配置管理模块
+// Configuration management module
 
-// 生成随机MAC地址
+// Generate random MAC address
 function generateRandomMac() {
     const hexDigits = '0123456789ABCDEF';
     let mac = '';
@@ -13,14 +13,14 @@ function generateRandomMac() {
     return mac;
 }
 
-// 加载配置
+// Load configuration
 export function loadConfig() {
     const deviceMacInput = document.getElementById('deviceMac');
     const deviceNameInput = document.getElementById('deviceName');
     const clientIdInput = document.getElementById('clientId');
     const otaUrlInput = document.getElementById('otaUrl');
 
-    // 从localStorage加载MAC地址，如果没有则生成新的
+    // Load MAC address from localStorage, generate new one if doesn't exist
     let savedMac = localStorage.getItem('xz_tester_deviceMac');
     if (!savedMac) {
         savedMac = generateRandomMac();
@@ -28,7 +28,7 @@ export function loadConfig() {
     }
     deviceMacInput.value = savedMac;
 
-    // 从localStorage加载其他配置
+    // Load other configurations from localStorage
     const savedDeviceName = localStorage.getItem('xz_tester_deviceName');
     if (savedDeviceName) {
         deviceNameInput.value = savedDeviceName;
@@ -45,7 +45,7 @@ export function loadConfig() {
     }
 }
 
-// 保存配置
+// Save configuration
 export function saveConfig() {
     const deviceMacInput = document.getElementById('deviceMac');
     const deviceNameInput = document.getElementById('deviceName');
@@ -56,18 +56,18 @@ export function saveConfig() {
     localStorage.setItem('xz_tester_clientId', clientIdInput.value);
 }
 
-// 获取配置值
+// Get configuration values
 export function getConfig() {
     const deviceMac = document.getElementById('deviceMac').value.trim();
     return {
-        deviceId: deviceMac,  // 使用MAC地址作为deviceId
+        deviceId: deviceMac,  // Use MAC address as deviceId
         deviceName: document.getElementById('deviceName').value.trim(),
         deviceMac: deviceMac,
         clientId: document.getElementById('clientId').value.trim()
     };
 }
 
-// 保存连接URL
+// Save connection URLs
 export function saveConnectionUrls() {
     const otaUrl = document.getElementById('otaUrl').value.trim();
     const wsUrl = document.getElementById('serverUrl').value.trim();
