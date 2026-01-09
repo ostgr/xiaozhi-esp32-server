@@ -381,7 +381,7 @@ class TTSProvider(TTSProviderBase):
                                 if text.strip():
                                     logger.bind(tag=TAG).debug(f"Alignment received: {text}")
 
-                    # Handle normalizedAlignment for word-level tracking
+                    # Handle normalizedAlignment for word-level tracking (debugging only)
                     if "normalizedAlignment" in data:
                         normalized = data["normalizedAlignment"]
                         if normalized and "chars" in normalized:
@@ -393,9 +393,15 @@ class TTSProvider(TTSProviderBase):
                                 else:
                                     text = "".join([c.get("char", "") if isinstance(c, dict) else str(c) for c in chars])
                                 if text.strip():
-                                    self.tts_audio_queue.put(
-                                        (SentenceType.FIRST, [], text)
-                                    )
+                                    logger.bind(tag=TAG).debug(f"Normalized alignment: {text}")
+
+                                    # Use original text from LLM instead of normalized alignment
+                                    # This preserves Vietnamese diacritics and spaces that would be lost in ElevenLabs' normalization
+                                    if self.conn.tts_MessageText:
+                                        self.tts_audio_queue.put(
+                                            (SentenceType.FIRST, [], self.conn.tts_MessageText)
+                                        )
+                                        self.conn.tts_MessageText = None
 
                     # Check if final chunk
                     if data.get("isFinal", False):
