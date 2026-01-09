@@ -12,7 +12,7 @@ import json
 API_KEY = "sk_d455b25f6ef58bfd92d81ded5ffe7cd58ba235c3bb1174e5"
 # Get VOICE_ID from https://elevenlabs.io/voice-library
 VOICE_ID = "558B1EcdabtcSdleer40"
-MODEL_ID = "eleven_multilingual_v2"
+MODEL_ID = "eleven_flash_v2_5"
 OUTPUT_FORMAT = "pcm_16000"
 
 # Note: This test focuses on connection keepalive, not audio generation

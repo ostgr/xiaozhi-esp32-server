@@ -34,7 +34,7 @@ class TTSProvider(TTSProviderBase):
         # Core configuration
         self.api_key = config.get("api_key")
         self.voice_id = config.get("voice_id")
-        self.model_id = config.get("model_id", "eleven_multilingual_v2")
+        self.model_id = config.get("model_id", "eleven_flash_v2_5")
 
         # Voice settings
         self.stability = float(config.get("stability", 0.5))

@@ -36,21 +36,40 @@ EMOJI_RANGES = [
 
 
 def get_string_no_punctuation_or_emoji(s):
-    """去除字符串首尾的空格、标点符号和表情符号"""
+    """Remove leading/trailing punctuation and emoji, but preserve spaces
+
+    Note: Spaces are preserved at all positions (leading, internal, trailing)
+    because they mark word boundaries in Vietnamese and other languages.
+    The original code removed ALL spaces, which broke word segmentation.
+    """
     chars = list(s)
-    # 处理开头的字符
+    # 处理开头的字符（只删除标点/emoji，不删除空格）
     start = 0
-    while start < len(chars) and is_punctuation_or_emoji(chars[start]):
-        start += 1
-    # 处理结尾的字符
+    while start < len(chars):
+        if is_punctuation_or_emoji(chars[start]) and not chars[start].isspace():
+            start += 1
+        else:
+            break
+
+    # 处理结尾的字符（只删除标点/emoji，不删除空格）
     end = len(chars) - 1
-    while end >= start and is_punctuation_or_emoji(chars[end]):
-        end -= 1
-    return "".join(chars[start : end + 1])
+    while end >= start:
+        if is_punctuation_or_emoji(chars[end]) and not chars[end].isspace():
+            end -= 1
+        else:
+            break
+
+    result = "".join(chars[start : end + 1])
+    # Then strip leading/trailing whitespace only (not internal spaces)
+    return result.strip()
 
 
 def is_punctuation_or_emoji(char):
-    """检查字符是否为空格、指定标点或表情符号"""
+    """检查字符是否为指定标点或表情符号（NOT spaces）
+
+    Note: Spaces are NOT treated as punctuation to preserve word boundaries
+    in Vietnamese and other languages that rely on spaces for word segmentation.
+    """
     # 定义需要去除的中英文标点（包括全角/半角）
     punctuation_set = {
         "，",
@@ -59,8 +78,8 @@ def is_punctuation_or_emoji(char):
         ".",  # 中文句号 + 英文句号
         "！",
         "!",  # 中文感叹号 + 英文感叹号
-        "“",
-        "”",
+        """,
+        """,
         '"',  # 中文双引号 + 英文引号
         "：",
         ":",  # 中文冒号 + 英文冒号
@@ -72,7 +91,8 @@ def is_punctuation_or_emoji(char):
         "【",
         "】",  # 中文方括号
     }
-    if char.isspace() or char in punctuation_set:
+    # NOTE: Removed char.isspace() check to preserve spaces for word boundaries
+    if char in punctuation_set:
         return True
     return is_emoji(char)
 

@@ -743,11 +743,11 @@ TTS:
     # Vietnamese voice: 558B1EcdabtcSdleer40
     voice_id: 558B1EcdabtcSdleer40
     # Model selection:
-    # - eleven_multilingual_v2: Highest quality, supports 29 languages (recommended)
+    # - eleven_flash_v2_5: Highest quality, supports 29 languages (recommended)
     # - eleven_turbo_v2_5: Fast generation, low latency
     # - eleven_flash_v2_5: Fastest speed, suitable for real-time applications
     # - eleven_turbo_v2: Balance between speed and quality
-    model_id: eleven_multilingual_v2
+    model_id: eleven_flash_v2_5
     # Voice settings (0-1)
     stability: 0.5  # Stability, higher values more stable but may be monotonous
     similarity_boost: 0.75  # Similarity enhancement, higher values closer to original voice

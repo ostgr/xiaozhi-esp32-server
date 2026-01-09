@@ -4,6 +4,7 @@ from openai.types import CompletionUsage
 from config.logger import setup_logging
 from core.utils.util import check_model_key
 from core.providers.llm.base import LLMProviderBase
+from core.utils.stream_buffer import UTF8StreamBuffer
 
 TAG = __name__
 logger = setup_logging()
@@ -79,6 +80,7 @@ class LLMProvider(LLMProviderBase):
 
             responses = self.client.chat.completions.create(**request_params)
 
+            stream_buffer = UTF8StreamBuffer()
             is_active = True
             for chunk in responses:
                 try:
@@ -93,8 +95,22 @@ class LLMProvider(LLMProviderBase):
                     if "</think>" in content:
                         is_active = True
                         content = content.split("</think>")[-1]
-                    if is_active:
-                        yield content
+                    if is_active and content:
+                        # Use UTF-8 safe buffer to prevent character corruption
+                        safe_content = stream_buffer.add_chunk(content)
+                        if safe_content:
+                            logger.bind(tag=TAG).debug(
+                                f"[OPENAI_STREAM] Yielding UTF-8 safe chunk: {repr(safe_content[:50])}"
+                            )
+                            yield safe_content
+
+            # Flush any remaining buffered content at stream end
+            final_content = stream_buffer.flush()
+            if final_content:
+                logger.bind(tag=TAG).debug(
+                    f"[OPENAI_STREAM] Flushing final buffer: {repr(final_content[:50])}"
+                )
+                yield final_content
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"Error in response generation: {e}")
@@ -123,12 +139,26 @@ class LLMProvider(LLMProviderBase):
 
             stream = self.client.chat.completions.create(**request_params)
 
+            stream_buffer = UTF8StreamBuffer()
             for chunk in stream:
                 if getattr(chunk, "choices", None):
                     delta = chunk.choices[0].delta
                     content = getattr(delta, "content", "")
                     tool_calls = getattr(delta, "tool_calls", None)
-                    yield content, tool_calls
+
+                    # Use UTF-8 safe buffer for content (but not for tool_calls)
+                    if content:
+                        safe_content = stream_buffer.add_chunk(content)
+                        if safe_content:
+                            logger.bind(tag=TAG).debug(
+                                f"[OPENAI_STREAM] Yielding UTF-8 safe chunk: {repr(safe_content[:50])}"
+                            )
+                            yield safe_content, tool_calls
+                        else:
+                            # Content is being buffered, don't yield yet
+                            yield "", tool_calls
+                    else:
+                        yield content, tool_calls
                 elif isinstance(getattr(chunk, "usage", None), CompletionUsage):
                     usage_info = getattr(chunk, "usage", None)
                     logger.bind(tag=TAG).info(
@@ -136,6 +166,14 @@ class LLMProvider(LLMProviderBase):
                         f"输出 {getattr(usage_info, 'completion_tokens', '未知')}，"
                         f"共计 {getattr(usage_info, 'total_tokens', '未知')}"
                     )
+
+            # Flush any remaining buffered content at stream end
+            final_content = stream_buffer.flush()
+            if final_content:
+                logger.bind(tag=TAG).debug(
+                    f"[OPENAI_STREAM] Flushing final buffer: {repr(final_content[:50])}"
+                )
+                yield final_content, None
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"Error in function call streaming: {e}")
