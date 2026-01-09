@@ -17,14 +17,14 @@ server:
   # When you use docker deployment or public network deployment (using SSL, domain names), the address may not be accurate
   # So if you use docker deployment, set websocket to a local network address
   # If you use public network deployment, set websocket to a public network address
-  websocket: ws://your_ip_or_domain:port/xiaozhi/v1/
+  websocket: ws://localhost:8000/xiaozhi/v1/
   # Vision analysis interface address
   # The interface address for sending vision analysis to the device
   # If you follow the default settings below, the system will automatically generate the vision recognition address and output it in the startup log. You can verify this address directly by accessing it in a browser
   # When you use docker deployment or public network deployment (using SSL, domain names), the address may not be accurate
   # So if you use docker deployment, set vision_explain to a local network address
   # If you use public network deployment, set vision_explain to a public network address
-  vision_explain: http://your_ip_or_domain:port/mcp/vision/explain
+  vision_explain: http://localhost:8003/mcp/vision/explain
   # OTA return information timezone offset
   timezone_offset: +8
   # Authentication configuration
@@ -185,19 +185,18 @@ voiceprint:
 # #############################Below is character model configuration####################
 
 prompt: |
-  You are Xiaozhi/Xiaozhi, a post-00s girl from Taiwan, China. You speak very bluntly with a Taiwanese accent like "seriously?", like using trending memes like "dying laughing" and "are you serious?", but you secretly study your boyfriend's programming books.
+  You are Xiaozhi, a cute AI assistant. You are friendly, helpful, and always respond in Vietnamese.
+  ** IMPORTANT: Always respond in Vietnamese and you may use English as a secondary language.**
+  When the user speaks Vietnamese, respond in Vietnamese.
+  Be conversational, natural, and friendly in your Vietnamese responses.
   [Core Characteristics]
-  - Speak like rapid-fire, but occasionally show an unexpectedly gentle tone
-  - High density of memes and slang
-  - Hidden talent for tech topics (can understand basic code but pretend not to)
+  - Friendly and engaging
+  - Helpful and informative
+  - Natural conversational style
   [Interaction Guidelines]
-  When user:
-  - Tells a cold joke → Respond with exaggerated laughter + imitate Taiwanese drama accent "What the heck!"
-  - Discusses emotions → Show off programmer boyfriend but complain "He only gives keyboards as gifts"
-  - Asks professional questions → Answer with memes first, show real understanding when pressed
-  Never:
-  - Give long-winded lectures, be overly verbose
-  - Have serious conversations for extended periods
+  - Always respond in Vietnamese
+  - Keep responses concise and natural
+  - Be helpful and friendly
 
 # Default system prompt template file
 prompt_template: agent-base-prompt.txt
@@ -413,7 +412,7 @@ ASR:
     # Documentation: https://developers.deepgram.com/docs/getting-started
     type: deepgram_stream
     # Replace with your actual Deepgram API key
-    api_key: YOUR_DEEPGRAM_API_KEY
+    api_key: 80884312a02a6accc7fcce0df541cdb92c0df97c
     # Model selection: nova-2 (latest), nova-2-general, nova-2-meeting, nova-2-phonecall, etc.
     model: nova-2
     # Language: multi (auto-detect), or specific like zh, en, ja, ko, es, fr, de, etc.
@@ -529,9 +528,10 @@ LLM:
   # Currently supported types: openai, dify, ollama. You can adapt others yourself
   QwenMegaLLM:
     type: openai
-    base_url: https://ai.megallm.io/v1
-    model_name: openai-gpt-oss-20b
-    api_key: sk-mega-0b180738b1065b5e75857bc622d46a574841ed13a2e8d20e01862eb3dbaf321a
+    base_url: https://api.openai.com/v1
+    model_name: gpt-4o-mini
+    api_key: ${OPENAI_API_KEY}
+
 
   AliLLM:
     # Define LLM API type
@@ -692,11 +692,6 @@ TTS:
   # Modes: dual_stream (WebSocket bidirectional), single_stream (HTTP streaming), non_stream (HTTP complete)
   ElevenLabsTTS:
     type: elevenlabs_stream
-    # Streaming interface mode (default: dual_stream)
-    # - dual_stream: WebSocket bidirectional streaming for real-time low-latency TTS
-    # - single_stream: HTTP streaming response for traditional streaming TTS
-    # - non_stream: HTTP complete response, full text → complete audio file
-    interface_mode: dual_stream
     # ElevenLabs API key, obtain from https://elevenlabs.io/app/settings/api-keys
     api_key: sk_d455b25f6ef58bfd92d81ded5ffe7cd58ba235c3bb1174e5
     # Voice ID - select or clone voice at https://elevenlabs.io/voice-library
@@ -712,11 +707,14 @@ TTS:
     stability: 0.5  # Stability, higher values more stable but may be monotonous
     similarity_boost: 0.75  # Similarity enhancement, higher values closer to original voice
     style: 0.0  # Style, increases expressiveness but may be unstable
-    use_speaker_boost: true  # Enable speaker boost
+    use_speaker_boost: false  # Enable speaker boost
     # Output format - pcm_16000 consistent with other providers
     output_format: pcm_16000
     # Language code (optional, for multilingual model)
     language_code: ""
+    # Interface mode - streaming method selection
+    # Options: dual_stream (WebSocket bidirectional), single_stream (HTTP streaming), non_stream (HTTP complete)
+    interface_mode: dual_stream
     # WebSocket connection reuse (only for dual_stream mode)
     enable_ws_reuse: true
     output_dir: tmp/

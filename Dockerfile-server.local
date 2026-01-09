@@ -74,8 +74,9 @@ RUN python -c "import sys; print(f'Python {sys.version}')" && \
 FROM final as runtime
 
 # Copy hot reload entrypoint script
+# Normalize line endings (works regardless of host OS - Windows CRLF will be converted to LF)
 COPY main/xiaozhi-server/entrypoint-dev.sh /entrypoint-dev.sh
-RUN chmod +x /entrypoint-dev.sh
+RUN sed -i 's/\r$//' /entrypoint-dev.sh && chmod +x /entrypoint-dev.sh
 
 # Copy application source code (will be mounted as volume)
 COPY main/xiaozhi-server/ .
