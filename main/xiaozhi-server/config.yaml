@@ -544,18 +544,6 @@ LLM:
     max_tokens: 500   # Maximum number of tokens to generate
     top_p: 1
     frequency_penalty: 0  # Frequency penalty
-  AliAppLLM:
-    # Define LLM API type
-    type: AliBL
-    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-    app_id: your_app_id
-    # Find your api_key here: https://bailian.console.aliyun.com/?apiKey=1#/api-key
-    api_key: your_api_key
-    # Whether to not use local prompt: true|false (default: don't use, set prompt in Bailian app)
-    is_no_prompt: true
-    # Ali_memory_id: false (not used) | your_memory_id (obtain from Bailian app settings)
-    # Tips: Ali_memory has not implemented multi-user memory storage (memory called by ID)
-    ali_memory_id: false
   DoubaoLLM:
     # Define LLM API type
     type: openai
@@ -581,22 +569,6 @@ LLM:
     model_name: glm-4-flash
     url: https://open.bigmodel.cn/api/paas/v4/
     api_key: your_chat_glm_web_key
-  OllamaLLM:
-    # Define LLM API type
-    type: ollama
-    model_name: qwen2.5 # Model name to use, requires pre-downloading with ollama pull
-    base_url: http://localhost:11434  # Ollama service address
-  DifyLLM:
-    # Define LLM API type
-    type: dify
-    # Recommend using locally deployed Dify interface. Public Dify cloud access may be limited in some regions
-    # If using DifyLLM, prompt configuration in config file is invalid. Set prompt in Dify console
-    base_url: https://api.dify.ai/v1
-    api_key: your_difyLLM_web_key
-    # Dialogue mode used. Can choose workflow (workflows/run), dialogue mode (chat-messages), or text generation (completion-messages)
-    # When using workflows, input parameter is 'query', output parameter name should be set to 'answer'
-    # Default input parameter for text generation is also 'query'
-    mode: chat-messages
   GeminiLLM:
     type: gemini
     # Google Gemini API, requires creating API key in Google Cloud console and obtaining api_key
@@ -607,15 +579,6 @@ LLM:
     model_name: "gemini-2.0-flash"
     http_proxy: ""  #"http://127.0.0.1:10808"
     https_proxy: "" #http://127.0.0.1:10808"
-  CozeLLM:
-    # Define LLM API type
-    type: coze
-    # Find personal access token here
-    # https://www.coze.cn/open/oauth/pats
-    # Write bot_id and user_id content in quotes
-    bot_id: "your_bot_id"
-    user_id: "your_user_id"
-    personal_access_token: your_coze_personal_access_token
   VolcesAiGatewayLLM:
     # Volcengine - Edge Large Model Gateway
     # Define LLM API type
@@ -639,29 +602,6 @@ LLM:
     base_url: http://homeassistant.local:8123
     agent_id: conversation.chatgpt
     api_key: your_home_assistant_api_access_token
-  FastgptLLM:
-    # Define LLM API type
-    type: fastgpt
-    # If using FastGPT, prompt configuration in config file is invalid. Set prompt in FastGPT console
-    base_url: https://host/api/v1
-    # Find your api_key here
-    # https://cloud.tryfastgpt.ai/account/apikey
-    api_key: your_fastgpt_secret_key
-    variables:
-      k: "v"
-      k2: "v2"
-  XinferenceLLM:
-    # Define LLM API type
-    type: xinference
-    # Xinference service address and model name
-    model_name: qwen2.5:72b-AWQ  # Model name to use, requires pre-starting the model in Xinference
-    base_url: http://localhost:9997  # Xinference service address
-  XinferenceSmallLLM:
-    # Define lightweight LLM API type for intent recognition
-    type: xinference
-    # Xinference service address and model name
-    model_name: qwen2.5:3b-AWQ  # Small model name for intent recognition
-    base_url: http://localhost:9997  # Xinference service address
 # VLLM configuration (Vision Language Large Model)
 VLLM:
   ChatGLMVLLM:

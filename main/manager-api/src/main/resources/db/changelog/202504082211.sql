@@ -1,6 +1,15 @@
 -- 本文件用于初始化模型供应器数据，无需手动执行，在项目启动时会自动执行
 -- --------------------------------------------------------
 -- 初始化模型供应器数据
+--
+-- NOTE: The following providers have been REMOVED in migration 202601101000_remove_deprecated_llm_providers:
+-- - ollama (SYSTEM_LLM_ollama)
+-- - dify (SYSTEM_LLM_dify)
+-- - coze (SYSTEM_LLM_coze)
+-- - fastgpt (SYSTEM_LLM_fastgpt)
+-- - xinference (SYSTEM_LLM_xinference)
+-- - AliBL (SYSTEM_LLM_AliBL)
+-- This historical data is preserved for documentation and rollback purposes.
 DELETE FROM `ai_model_provider`;
 INSERT INTO `ai_model_provider` (`id`, `model_type`, `provider_code`, `name`, `fields`, `sort`, `creator`, `create_date`, `updater`, `update_date`) VALUES
 -- VAD模型供应器

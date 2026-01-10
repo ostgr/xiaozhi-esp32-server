@@ -711,26 +711,27 @@ export default {
       const llmType = this.llmModeTypeMap.get(currentLlmId);
       if (!llmType) return;
 
+      // LLM providers that support function calling
+      const functionCallSupportedTypes = ["openai", "gemini"];
+
       this.modelOptions["Intent"].forEach((item) => {
         if (item.value === "Intent_function_call") {
-          // 如果llmType是openai或ollama，允许选择function_call
-          // 否则隐藏function_call选项
-          if (llmType === "openai" || llmType === "ollama") {
+          // Only allow function_call for providers that support it
+          if (functionCallSupportedTypes.includes(llmType)) {
             item.isHidden = false;
           } else {
             item.isHidden = true;
           }
         } else {
-          // 其他意图识别选项始终可见
+          // Other intent recognition options are always visible
           item.isHidden = false;
         }
       });
 
-      // 如果当前选择的意图识别是function_call，但LLM类型不支持，则设置为可选的第一项
+      // If current intent is function_call but LLM doesn't support it, switch to first available option
       if (
         this.form.model.intentModelId === "Intent_function_call" &&
-        llmType !== "openai" &&
-        llmType !== "ollama"
+        !functionCallSupportedTypes.includes(llmType)
       ) {
         // 找到第一个可见的选项
         const firstVisibleOption = this.modelOptions["Intent"].find(

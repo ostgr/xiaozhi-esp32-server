@@ -503,8 +503,15 @@ databaseChangeLog:
             path: classpath:db/changelog/202601081501.sql
   - changeSet:
       id: 202601091200
-      author: Claude
+      author: Tunguyen
       changes:
         - sqlFile:
             encoding: utf8
             path: classpath:db/changelog/202601091200.sql
+  - changeSet:
+      id: 202601101000
+      author: Tunguyen
+      changes:
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/changelog/202601101000.sql
