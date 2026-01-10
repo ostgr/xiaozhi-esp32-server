@@ -78,6 +78,21 @@ class LLMProvider(LLMProviderBase):
                 if value is not None:
                     request_params[key] = value
 
+            # Log the full request
+            logger.bind(tag=TAG).info(
+                f"========== LLM REQUEST (response) ==========\n"
+                f"Model: {self.model_name}\n"
+                f"Base URL: {self.base_url}\n"
+                f"Request Parameters:\n"
+                f"  - stream: True\n"
+                f"  - max_tokens: {request_params.get('max_tokens')}\n"
+                f"  - temperature: {request_params.get('temperature')}\n"
+                f"  - top_p: {request_params.get('top_p')}\n"
+                f"  - frequency_penalty: {request_params.get('frequency_penalty')}\n"
+                f"Messages Count: {len(dialogue)}\n"
+                f"========== END LLM REQUEST =========="
+            )
+
             responses = self.client.chat.completions.create(**request_params)
 
             stream_buffer = UTF8StreamBuffer()
@@ -115,7 +130,9 @@ class LLMProvider(LLMProviderBase):
         except Exception as e:
             logger.bind(tag=TAG).error(f"Error in response generation: {e}")
 
-    def response_with_functions(self, session_id, dialogue, functions=None, **kwargs):
+    def response_with_functions(
+        self, session_id, dialogue, functions=None, **kwargs
+    ):
         try:
             dialogue = self.normalize_dialogue(dialogue)
 
@@ -130,12 +147,37 @@ class LLMProvider(LLMProviderBase):
                 "max_tokens": kwargs.get("max_tokens", self.max_tokens),
                 "temperature": kwargs.get("temperature", self.temperature),
                 "top_p": kwargs.get("top_p", self.top_p),
-                "frequency_penalty": kwargs.get("frequency_penalty", self.frequency_penalty),
+                "frequency_penalty": kwargs.get(
+                    "frequency_penalty", self.frequency_penalty
+                ),
             }
 
             for key, value in optional_params.items():
                 if value is not None:
                     request_params[key] = value
+
+            # Log the full request with functions
+            tools_summary = []
+            if functions:
+                for tool in functions:
+                    if "function" in tool:
+                        tools_summary.append(tool["function"].get("name", "unknown"))
+
+            logger.bind(tag=TAG).info(
+                f"========== LLM REQUEST (response_with_functions) ==========\n"
+                f"Model: {self.model_name}\n"
+                f"Base URL: {self.base_url}\n"
+                f"Request Parameters:\n"
+                f"  - stream: True\n"
+                f"  - max_tokens: {request_params.get('max_tokens')}\n"
+                f"  - temperature: {request_params.get('temperature')}\n"
+                f"  - top_p: {request_params.get('top_p')}\n"
+                f"  - frequency_penalty: "
+                f"{request_params.get('frequency_penalty')}\n"
+                f"  - tools: {tools_summary}\n"
+                f"Messages Count: {len(dialogue)}\n"
+                f"========== END LLM REQUEST =========="
+            )
 
             stream = self.client.chat.completions.create(**request_params)
 

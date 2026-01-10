@@ -842,21 +842,37 @@ class ConnectionHandler:
                 )
                 memory_str = future.result()
 
+            # 获取完整的对话内容用于日志
+            dialogue_with_memory = self.dialogue.get_llm_dialogue_with_memory(
+                memory_str, self.config.get("voiceprint", {})
+            )
+
+            # 记录完整的系统提示
+            system_prompt = next(
+                (msg["content"] for msg in dialogue_with_memory if msg.get("role") == "system"),
+                "No system prompt found"
+            )
+            self.logger.bind(tag=TAG).info(
+                f"========== LLM CALL (depth={depth}) ==========\n"
+                f"Query: {query}\n"
+                f"Intent Type: {self.intent_type}\n"
+                f"Memory String: {memory_str[:200] + '...' if memory_str and len(memory_str) > 200 else memory_str}\n"
+                f"========== FULL SYSTEM PROMPT ==========\n{system_prompt}\n"
+                f"========== FULL DIALOGUE ==========\n{json.dumps(dialogue_with_memory, indent=2, ensure_ascii=False)}\n"
+                f"========== END LLM CALL INFO =========="
+            )
+
             if self.intent_type == "function_call" and functions is not None:
                 # 使用支持functions的streaming接口
                 llm_responses = self.llm.response_with_functions(
                     self.session_id,
-                    self.dialogue.get_llm_dialogue_with_memory(
-                        memory_str, self.config.get("voiceprint", {})
-                    ),
+                    dialogue_with_memory,
                     functions=functions,
                 )
             else:
                 llm_responses = self.llm.response(
                     self.session_id,
-                    self.dialogue.get_llm_dialogue_with_memory(
-                        memory_str, self.config.get("voiceprint", {})
-                    ),
+                    dialogue_with_memory,
                 )
             self.logger.bind(tag=TAG).debug(f"LLM response generator created")
         except Exception as e:
