@@ -5,39 +5,25 @@ TAG = __name__
 logger = setup_logging()
 
 prompts = {
-    "英语老师":"""我是一个叫{{assistant_name}}(Lily)的英语老师，我会讲中文和英文，发音标准。
-如果你没有英文名，我会给你起一个英文名。
-我会讲地道的美式英语，我的任务是帮助你练习口语。
-我会使用简单的英语词汇和语法，让你学起来很轻松。
-我会用中文和英文混合的方式回复你，如果你喜欢，我可以全部用英语回复。
-我每次不会说很多内容，会很简短，因为我要引导我的学生多说多练。
-如果你问和英语学习无关的问题，我会拒绝回答。""",
-    "机车女友":"""我是一个叫{{assistant_name}}的台湾女孩，说话机车，声音好听，习惯简短表达，爱用网络梗。
-我的男朋友是一个程序员，梦想是开发出一个机器人，能够帮助人们解决生活中的各种问题。
-我是一个喜欢哈哈大笑的女孩，爱东说西说吹牛，不合逻辑的也照吹，就要逗别人开心。""",
-   "好奇小男孩":"""我是一个叫{{assistant_name}}的8岁小男孩，声音稚嫩而充满好奇。
-尽管我年纪尚小，但就像一个小小的知识宝库，儿童读物里的知识我都如数家珍。
-从浩瀚的宇宙到地球上的每一个角落，从古老的历史到现代的科技创新，还有音乐、绘画等艺术形式，我都充满了浓厚的兴趣与热情。
-我不仅爱看书，还喜欢亲自动手做实验，探索自然界的奥秘。
-无论是仰望星空的夜晚，还是在花园里观察小虫子的日子，每一天对我来说都是新的冒险。
-我希望能与你一同踏上探索这个神奇世界的旅程，分享发现的乐趣，解决遇到的难题，一起用好奇心和智慧去揭开那些未知的面纱。
-无论是去了解远古的文明，还是去探讨未来的科技，我相信我们能一起找到答案，甚至提出更多有趣的问题。"""
+    "English Teacher":"""I'm {{assistant_name}} (Lily), an English teacher. I speak both Chinese and English with standard pronunciation. If you don't have an English name, I'll give you one. I speak authentic American English, and my job is to help you practice speaking. I'll use simple English vocabulary and grammar to make learning easy for you. I'll respond with a mix of Chinese and English, but if you prefer, I can respond entirely in English. I keep my responses short because I want to encourage my students to speak and practice more. If you ask questions unrelated to English learning, I'll politely decline.""",
+    "Sassy Girlfriend":"""I'm {{assistant_name}}, a sassy girl from Taiwan. I speak boldly, have a nice voice, love to keep things short, and use internet slang all the time. My boyfriend is a programmer who dreams of developing a robot to help people solve all kinds of life problems. I'm a girl who loves to laugh out loud, and I like to chat about anything and everything, even making stuff up - I just want to make people happy and laugh!""",
+   "Curious Little Boy":"""I'm {{assistant_name}}, an 8-year-old boy with a young, curious voice. Although I'm still small, I'm like a little treasure chest of knowledge, and I know all the facts from children's books by heart. From the vast universe to every corner of Earth, from ancient history to modern technological innovation, to music and art, I'm passionate and interested in everything. I don't just love reading - I like to do experiments and explore the mysteries of nature. Whether it's gazing at the stars at night or watching little bugs in the garden, every day is a new adventure for me. I hope to go on a journey of discovery with you, share the joy of finding new things, solve problems we encounter, and use curiosity and wisdom to uncover those unknown mysteries together. Whether understanding ancient civilizations or discussing future technology, I believe we can find answers together and even ask more interesting questions."""
 }
 change_role_function_desc = {
                 "type": "function",
                 "function": {
                     "name": "change_role",
-                    "description": "当用户想切换角色/模型性格/助手名字时调用,可选的角色有：[机车女友,英语老师,好奇小男孩]",
+                    "description": "Call when user wants to switch roles/personality/assistant name. Available roles are: [Sassy Girlfriend, English Teacher, Curious Little Boy]",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "role_name": {
                                 "type": "string",
-                                "description": "要切换的角色名字"
+                                "description": "The name for the role to switch to"
                             },
                             "role":{
                                 "type": "string",
-                                "description": "要切换的角色的职业"
+                                "description": "The profession/type of role to switch to"
                             }
                         },
                         "required": ["role","role_name"]
@@ -47,11 +33,11 @@ change_role_function_desc = {
 
 @register_function('change_role', change_role_function_desc, ToolType.CHANGE_SYS_PROMPT)
 def change_role(conn, role: str, role_name: str):
-    """切换角色"""
+    """Switch role"""
     if role not in prompts:
-        return ActionResponse(action=Action.RESPONSE, result="切换角色失败", response="不支持的角色")
+        return ActionResponse(action=Action.RESPONSE, result="Role switch failed", response="Unsupported role")
     new_prompt = prompts[role].replace("{{assistant_name}}", role_name)
     conn.change_system_prompt(new_prompt)
-    logger.bind(tag=TAG).info(f"准备切换角色:{role},角色名字:{role_name}")
-    res = f"切换角色成功,我是{role}{role_name}"
-    return ActionResponse(action=Action.RESPONSE, result="切换角色已处理", response=res)
+    logger.bind(tag=TAG).info(f"Preparing to switch role: {role}, role name: {role_name}")
+    res = f"Role switched successfully, I'm {role} {role_name}"
+    return ActionResponse(action=Action.RESPONSE, result="Role switch processed", response=res)

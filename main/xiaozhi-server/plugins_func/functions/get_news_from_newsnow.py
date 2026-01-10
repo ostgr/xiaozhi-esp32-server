@@ -47,7 +47,7 @@ CHANNEL_MAP = {
 }
 
 
-# 默认新闻来源字典，当配置中没有指定时使用
+# Default news sources when not specified in config
 DEFAULT_NEWS_SOURCES = "澎湃新闻;百度热搜;财联社"
 
 
@@ -89,10 +89,10 @@ GET_NEWS_FROM_NEWSNOW_FUNCTION_DESC = {
     "function": {
         "name": "get_news_from_newsnow",
         "description": (
-            "获取最新新闻，随机选择一条新闻进行播报。"
-            f"用户可以选择不同的新闻源，标准的名称是：{example_sources_str}"
-            "例如用户要求百度新闻，其实就是百度热搜。如果没有指定，默认从澎湃新闻获取。"
-            "用户可以要求获取详细内容，此时会获取新闻的详细内容。"
+            "Get latest news and randomly select one for broadcast. "
+            f"User can choose different news sources, standard names are: {example_sources_str} "
+            "For example, if user requests 'Baidu news', it's actually Baidu hot search. If not specified, get from Pengpai News by default. "
+            "User can request detailed content, which will fetch full news details."
         ),
         "parameters": {
             "type": "object",

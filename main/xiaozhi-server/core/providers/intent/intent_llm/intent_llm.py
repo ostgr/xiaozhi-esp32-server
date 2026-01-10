@@ -32,19 +32,19 @@ class IntentProvider(IntentProviderBase):
             格式化后的系统提示词
         """
 
-        # 构建函数说明部分
-        functions_desc = "可用的函数列表：\n"
+        # Build function descriptions section
+        functions_desc = "Available Functions List:\n"
         for func in functions_list:
             func_info = func.get("function", {})
             name = func_info.get("name", "")
             desc = func_info.get("description", "")
             params = func_info.get("parameters", {})
 
-            functions_desc += f"\n函数名: {name}\n"
-            functions_desc += f"描述: {desc}\n"
+            functions_desc += f"\nFunction Name: {name}\n"
+            functions_desc += f"Description: {desc}\n"
 
             if params:
-                functions_desc += "参数:\n"
+                functions_desc += "Parameters:\n"
                 for param_name, param_info in params.get("properties", {}).items():
                     param_desc = param_info.get("description", "")
                     param_type = param_info.get("type", "")
@@ -53,64 +53,64 @@ class IntentProvider(IntentProviderBase):
             functions_desc += "---\n"
 
         prompt = (
-            "【严格格式要求】你必须只能返回JSON格式，绝对不能返回任何自然语言！\n\n"
-            "你是一个意图识别助手。请分析用户的最后一句话，判断用户意图并调用相应的函数。\n\n"
-            "【重要规则】以下类型的查询请直接返回result_for_context，无需调用函数：\n"
-            "- 询问当前时间（如：现在几点、当前时间、查询时间等）\n"
-            "- 询问今天日期（如：今天几号、今天星期几、今天是什么日期等）\n"
-            "- 询问今天农历（如：今天农历几号、今天什么节气等）\n"
-            "- 询问所在城市（如：我现在在哪里、你知道我在哪个城市吗等）"
-            "系统会根据上下文信息直接构建回答。\n\n"
-            "- 如果用户使用疑问词（如'怎么'、'为什么'、'如何'）询问退出相关的问题（例如'怎么退出了？'），注意这不是让你退出，请返回 {'function_call': {'name': 'continue_chat'}\n"
-            "- 仅当用户明确使用'退出系统'、'结束对话'、'我不想和你说话了'等指令时，才触发 handle_exit_intent\n\n"
+            "【Strict Format Requirement】You MUST return ONLY JSON format, absolutely NO natural language!\n\n"
+            "You are an intent recognition assistant. Analyze the user's last sentence, determine their intent, and call the appropriate function.\n\n"
+            "【Important Rules】For the following query types, return result_for_context directly without calling functions:\n"
+            "- Asking current time (e.g., what time is it, current time, query time, etc.)\n"
+            "- Asking today's date (e.g., what date is today, what day of week, what's today's date, etc.)\n"
+            "- Asking today's lunar date (e.g., what's lunar date today, what solar term, etc.)\n"
+            "- Asking current location (e.g., where am I, what city am I in, etc.)\n"
+            "The system will construct answers directly from context information.\n\n"
+            "- If user uses question words (e.g., 'how', 'why', 'how to') asking about exit (e.g., 'how did I exit?'), note this is NOT asking you to exit, return {'function_call': {'name': 'continue_chat'}\n"
+            "- Only trigger handle_exit_intent when user explicitly uses 'exit system', 'end conversation', 'I don't want to talk to you anymore', etc.\n\n"
             f"{functions_desc}\n"
-            "处理步骤:\n"
-            "1. 分析用户输入，确定用户意图\n"
-            "2. 检查是否为上述基础信息查询（时间、日期等），如是则返回result_for_context\n"
-            "3. 从可用函数列表中选择最匹配的函数\n"
-            "4. 如果找到匹配的函数，生成对应的function_call 格式\n"
-            '5. 如果没有找到匹配的函数，返回{"function_call": {"name": "continue_chat"}}\n\n'
-            "返回格式要求：\n"
-            "1. 必须返回纯JSON格式，不要包含任何其他文字\n"
-            "2. 必须包含function_call字段\n"
-            "3. function_call必须包含name字段\n"
-            "4. 如果函数需要参数，必须包含arguments字段\n\n"
-            "示例：\n"
+            "Processing Steps:\n"
+            "1. Analyze user input and determine intent\n"
+            "2. Check if this is a basic info query (time, date, etc.), if yes return result_for_context\n"
+            "3. Select the best matching function from available functions\n"
+            "4. If matching function found, generate corresponding function_call format\n"
+            '5. If no matching function found, return {"function_call": {"name": "continue_chat"}}\n\n'
+            "Return Format Requirements:\n"
+            "1. MUST return pure JSON format only, no other text\n"
+            "2. MUST include function_call field\n"
+            "3. function_call MUST include name field\n"
+            "4. If function needs parameters, MUST include arguments field\n\n"
+            "Examples:\n"
             "```\n"
-            "用户: 现在几点了？\n"
-            '返回: {"function_call": {"name": "result_for_context"}}\n'
-            "```\n"
-            "```\n"
-            "用户: 当前电池电量是多少？\n"
-            '返回: {"function_call": {"name": "get_battery_level", "arguments": {"response_success": "当前电池电量为{value}%", "response_failure": "无法获取Battery的当前电量百分比"}}}\n'
+            "User: What time is it now?\n"
+            'Return: {"function_call": {"name": "result_for_context"}}\n'
             "```\n"
             "```\n"
-            "用户: 当前屏幕亮度是多少？\n"
-            '返回: {"function_call": {"name": "self_screen_get_brightness"}}\n'
+            "User: What's the current battery level?\n"
+            'Return: {"function_call": {"name": "get_battery_level", "arguments": {"response_success": "Current battery level is {value}%", "response_failure": "Unable to get current battery percentage"}}}\n'
             "```\n"
             "```\n"
-            "用户: 设置屏幕亮度为50%\n"
-            '返回: {"function_call": {"name": "self_screen_set_brightness", "arguments": {"brightness": 50}}}\n'
+            "User: What's the current screen brightness?\n"
+            'Return: {"function_call": {"name": "self_screen_get_brightness"}}\n'
             "```\n"
             "```\n"
-            "用户: 我想结束对话\n"
-            '返回: {"function_call": {"name": "handle_exit_intent", "arguments": {"say_goodbye": "goodbye"}}}\n'
+            "User: Set screen brightness to 50%\n"
+            'Return: {"function_call": {"name": "self_screen_set_brightness", "arguments": {"brightness": 50}}}\n'
             "```\n"
             "```\n"
-            "用户: 你好啊\n"
-            '返回: {"function_call": {"name": "continue_chat"}}\n'
+            "User: I want to end the conversation\n"
+            'Return: {"function_call": {"name": "handle_exit_intent", "arguments": {"say_goodbye": "goodbye"}}}\n'
+            "```\n"
+            "```\n"
+            "User: Hi there\n"
+            'Return: {"function_call": {"name": "continue_chat"}}\n'
             "```\n\n"
-            "注意：\n"
-            "1. 只返回JSON格式，不要包含任何其他文字\n"
-            '2. 优先检查用户查询是否为基础信息（时间、日期等），如是则返回{"function_call": {"name": "result_for_context"}}，不需要arguments参数\n'
-            '3. 如果没有找到匹配的函数，返回{"function_call": {"name": "continue_chat"}}\n'
-            "4. 确保返回的JSON格式正确，包含所有必要的字段\n"
-            "5. result_for_context不需要任何参数，系统会自动从上下文获取信息\n"
-            "特殊说明：\n"
-            "- 当用户单次输入包含多个指令时（如'打开灯并且调高音量'）\n"
-            "- 请返回多个function_call组成的JSON数组\n"
-            "- 示例：{'function_calls': [{name:'light_on'}, {name:'volume_up'}]}\n\n"
-            "【最终警告】绝对禁止输出任何自然语言、表情符号或解释文字！只能输出有效JSON格式！违反此规则将导致系统错误！"
+            "Important Notes:\n"
+            "1. Return ONLY JSON format, no other text\n"
+            '2. First check if user query is basic info (time, date, etc.), if yes return {"function_call": {"name": "result_for_context"}}, no arguments needed\n'
+            '3. If no matching function found, return {"function_call": {"name": "continue_chat"}}\n'
+            "4. Ensure returned JSON is properly formatted with all required fields\n"
+            "5. result_for_context needs no parameters, system will auto-fetch from context\n"
+            "Special Instructions:\n"
+            "- When user input contains multiple instructions in one go (e.g., 'turn on light and increase volume')\n"
+            "- Return JSON array with multiple function_call entries\n"
+            "- Example: {'function_calls': [{name:'light_on'}, {name:'volume_up'}]}\n\n"
+            "【Final Warning】Absolutely forbidden to output any natural language, emojis or explanatory text! Only valid JSON format allowed! Violation will cause system errors!"
         )
         return prompt
 

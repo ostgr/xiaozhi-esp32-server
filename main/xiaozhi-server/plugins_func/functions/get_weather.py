@@ -12,20 +12,20 @@ GET_WEATHER_FUNCTION_DESC = {
     "function": {
         "name": "get_weather",
         "description": (
-            "获取某个地点的天气，用户应提供一个位置，比如用户说杭州天气，参数为：杭州。"
-            "如果用户说的是省份，默认用省会城市。如果用户说的不是省份或城市而是一个地名，默认用该地所在省份的省会城市。"
-            "如果用户没有指明地点，说“天气怎么样”，”今天天气如何“，location参数为空"
+            "Get weather for a location. User should provide a location, e.g., if user says 'Hangzhou weather', parameter is: Hangzhou. "
+            "If user mentions a province, use the provincial capital by default. If it's a place name not a province or city, use the capital of the province it's in. "
+            "If user doesn't specify location, saying 'how's the weather', 'what's today's weather', leave location parameter empty"
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "location": {
                     "type": "string",
-                    "description": "地点名，例如杭州。可选参数，如果不提供则不传",
+                    "description": "Location name, e.g., Hangzhou. Optional parameter, omit if not provided",
                 },
                 "lang": {
                     "type": "string",
-                    "description": "返回用户使用的语言code，例如zh_CN/zh_HK/en_US/ja_JP等，默认zh_CN",
+                    "description": "Language code for user, e.g., zh_CN/zh_HK/en_US/ja_JP, default zh_CN",
                 },
             },
             "required": ["lang"],
