@@ -45,7 +45,7 @@ class UTF8StreamBuffer:
 
         # Fast path: pure ASCII (0-127)
         if all(ord(c) < 128 for c in chunk):
-            logger.debug(
+            logger.trace(
                 f"[UTF8_BUFFER] ASCII chunk (fast path): {repr(chunk[:50])}"
             )
             # For word boundary mode, check if this chunk ends with boundary
@@ -55,14 +55,14 @@ class UTF8StreamBuffer:
 
         # Add to buffer
         self._text_buffer += chunk
-        logger.debug(
+        logger.trace(
             f"[UTF8_BUFFER] Added to buffer: {repr(chunk[:50])} "
             f"(total: {len(self._text_buffer)} chars)"
         )
 
         # Check for incomplete UTF-8 at end
         if self._has_incomplete_utf8_at_end(self._text_buffer):
-            logger.debug(
+            logger.trace(
                 f"[UTF8_BUFFER] Incomplete UTF-8, buffering "
                 f"(total: {len(self._text_buffer)} chars)"
             )
@@ -75,7 +75,7 @@ class UTF8StreamBuffer:
         # Safe to yield without word boundary check
         result = self._text_buffer
         self._text_buffer = ""
-        logger.debug(f"[UTF8_BUFFER] Yielding: {repr(result[:50])}")
+        logger.trace(f"[UTF8_BUFFER] Yielding: {repr(result[:50])}")
         return result
 
     def flush(self) -> str:
@@ -86,7 +86,7 @@ class UTF8StreamBuffer:
         """
         result = self._text_buffer
         if result:
-            logger.debug(f"[UTF8_BUFFER] Flushing: {repr(result[:50])}")
+            logger.trace(f"[UTF8_BUFFER] Flushing: {repr(result[:50])}")
         self._text_buffer = ""
         return result
 
@@ -125,7 +125,7 @@ class UTF8StreamBuffer:
             # But only if not already in buffer (for ASCII fast path)
             if text != self._text_buffer:
                 self._text_buffer += text
-            logger.debug(
+            logger.trace(
                 f"[UTF8_BUFFER] No word boundary, buffering "
                 f"{len(self._text_buffer)} chars"
             )
@@ -136,7 +136,7 @@ class UTF8StreamBuffer:
         remaining = text[last_boundary_pos + 1:]
 
         self._text_buffer = remaining
-        logger.debug(
+        logger.trace(
             f"[UTF8_BUFFER] Word boundary found, yielding "
             f"{repr(result[:50])}"
         )
