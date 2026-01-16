@@ -1,6 +1,15 @@
+import asyncio
 import httpx
 import openai
+from openai import AsyncOpenAI
 from openai.types import CompletionUsage
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    before_sleep_log,
+)
 from config.logger import setup_logging
 from core.utils.util import check_model_key
 from core.providers.llm.base import LLMProviderBase
@@ -8,6 +17,20 @@ from core.utils.stream_buffer import UTF8StreamBuffer
 
 TAG = __name__
 logger = setup_logging()
+
+# Retry configuration for OpenAI API calls
+RETRY_CONFIG = {
+    "stop": stop_after_attempt(3),
+    "wait": wait_exponential(multiplier=1, min=2, max=10),
+    "retry": retry_if_exception_type((
+        openai.APIError,
+        openai.APIConnectionError,
+        openai.APITimeoutError,
+        openai.RateLimitError,
+    )),
+    "before_sleep": before_sleep_log(logger, "WARNING"),
+    "reraise": True,
+}
 
 
 class LLMProvider(LLMProviderBase):
@@ -46,7 +69,20 @@ class LLMProvider(LLMProviderBase):
         model_key_msg = check_model_key("LLM", self.api_key)
         if model_key_msg:
             logger.bind(tag=TAG).error(model_key_msg)
-        self.client = openai.OpenAI(api_key=self.api_key, base_url=self.base_url, timeout=httpx.Timeout(self.timeout))
+
+        # Initialize sync client
+        self.client = openai.OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=httpx.Timeout(self.timeout)
+        )
+
+        # Initialize async client for async methods
+        self.async_client = AsyncOpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=httpx.Timeout(self.timeout)
+        )
 
     @staticmethod
     def normalize_dialogue(dialogue):
@@ -93,7 +129,8 @@ class LLMProvider(LLMProviderBase):
                 f"========== END LLM REQUEST =========="
             )
 
-            responses = self.client.chat.completions.create(**request_params)
+            # Use retry wrapper for reliability
+            responses = self._call_openai_sync(request_params)
 
             stream_buffer = UTF8StreamBuffer()
             is_active = True
@@ -179,7 +216,8 @@ class LLMProvider(LLMProviderBase):
                 f"========== END LLM REQUEST =========="
             )
 
-            stream = self.client.chat.completions.create(**request_params)
+            # Use retry wrapper for reliability
+            stream = self._call_openai_sync(request_params)
 
             stream_buffer = UTF8StreamBuffer()
             for chunk in stream:
@@ -219,4 +257,186 @@ class LLMProvider(LLMProviderBase):
 
         except Exception as e:
             logger.bind(tag=TAG).error(f"Error in function call streaming: {e}")
+            yield f"【OpenAI服务响应异常: {e}】", None
+
+    # Retry wrappers for API calls
+    @retry(**RETRY_CONFIG)
+    def _call_openai_sync(self, request_params):
+        """Sync API call with retry mechanism"""
+        return self.client.chat.completions.create(**request_params)
+
+    @retry(**RETRY_CONFIG)
+    async def _call_openai_async_stream(self, request_params):
+        """Async streaming with retry - returns context manager"""
+        return self.async_client.chat.completions.stream(**request_params)
+
+    async def async_response(self, session_id, dialogue, **kwargs):
+        """Async version using .stream() context manager with AsyncOpenAI"""
+        try:
+            dialogue = self.normalize_dialogue(dialogue)
+
+            request_params = {
+                "model": self.model_name,
+                "messages": dialogue,
+            }
+
+            # Add optional parameters
+            optional_params = {
+                "max_tokens": kwargs.get("max_tokens", self.max_tokens),
+                "temperature": kwargs.get("temperature", self.temperature),
+                "top_p": kwargs.get("top_p", self.top_p),
+                "frequency_penalty": kwargs.get("frequency_penalty", self.frequency_penalty),
+            }
+
+            for key, value in optional_params.items():
+                if value is not None:
+                    request_params[key] = value
+
+            # Log the full request
+            logger.bind(tag=TAG).info(
+                f"========== LLM REQUEST (async_response) ==========\n"
+                f"Model: {self.model_name}\n"
+                f"Base URL: {self.base_url}\n"
+                f"Request Parameters:\n"
+                f"  - stream: True (async with context manager)\n"
+                f"  - max_tokens: {request_params.get('max_tokens')}\n"
+                f"  - temperature: {request_params.get('temperature')}\n"
+                f"  - top_p: {request_params.get('top_p')}\n"
+                f"  - frequency_penalty: {request_params.get('frequency_penalty')}\n"
+                f"Messages Count: {len(dialogue)}\n"
+                f"========== END LLM REQUEST =========="
+            )
+
+            stream_buffer = UTF8StreamBuffer()
+            is_active = True
+
+            # Use .stream() context manager with retry
+            async with await self._call_openai_async_stream(request_params) as stream:
+                async for chunk in stream:
+                    try:
+                        delta = chunk.choices[0].delta if getattr(chunk, "choices", None) else None
+                        content = getattr(delta, "content", "") if delta else ""
+                    except IndexError:
+                        content = ""
+
+                    if content:
+                        # Thinking tag filtering (same as sync)
+                        if "<think>" in content:
+                            is_active = False
+                            content = content.split("<think>")[0]
+                        if "</think>" in content:
+                            is_active = True
+                            content = content.split("</think>")[-1]
+
+                        if is_active and content:
+                            # Use UTF-8 safe buffer
+                            safe_content = stream_buffer.add_chunk(content)
+                            if safe_content:
+                                logger.bind(tag=TAG).debug(
+                                    f"[ASYNC_OPENAI_STREAM] Yielding UTF-8 safe chunk: {repr(safe_content[:50])}"
+                                )
+                                yield safe_content
+
+            # Flush any remaining buffered content at stream end
+            final_content = stream_buffer.flush()
+            if final_content:
+                logger.bind(tag=TAG).debug(
+                    f"[ASYNC_OPENAI_STREAM] Flushing final buffer: {repr(final_content[:50])}"
+                )
+                yield final_content
+
+        except Exception as e:
+            logger.bind(tag=TAG).error(f"Error in async response generation: {e}")
+
+    async def async_response_with_functions(
+        self, session_id, dialogue, functions=None, **kwargs
+    ):
+        """Async version with function calling support using .stream() context manager"""
+        try:
+            dialogue = self.normalize_dialogue(dialogue)
+
+            request_params = {
+                "model": self.model_name,
+                "messages": dialogue,
+                "tools": functions,
+            }
+
+            # Add optional parameters
+            optional_params = {
+                "max_tokens": kwargs.get("max_tokens", self.max_tokens),
+                "temperature": kwargs.get("temperature", self.temperature),
+                "top_p": kwargs.get("top_p", self.top_p),
+                "frequency_penalty": kwargs.get(
+                    "frequency_penalty", self.frequency_penalty
+                ),
+            }
+
+            for key, value in optional_params.items():
+                if value is not None:
+                    request_params[key] = value
+
+            # Log the full request with functions
+            tools_summary = []
+            if functions:
+                for tool in functions:
+                    if "function" in tool:
+                        tools_summary.append(tool["function"].get("name", "unknown"))
+
+            logger.bind(tag=TAG).info(
+                f"========== LLM REQUEST (async_response_with_functions) ==========\n"
+                f"Model: {self.model_name}\n"
+                f"Base URL: {self.base_url}\n"
+                f"Request Parameters:\n"
+                f"  - stream: True (async with context manager)\n"
+                f"  - max_tokens: {request_params.get('max_tokens')}\n"
+                f"  - temperature: {request_params.get('temperature')}\n"
+                f"  - top_p: {request_params.get('top_p')}\n"
+                f"  - frequency_penalty: "
+                f"{request_params.get('frequency_penalty')}\n"
+                f"  - tools: {tools_summary}\n"
+                f"Messages Count: {len(dialogue)}\n"
+                f"========== END LLM REQUEST =========="
+            )
+
+            stream_buffer = UTF8StreamBuffer()
+
+            # Use .stream() context manager with retry
+            async with await self._call_openai_async_stream(request_params) as stream:
+                async for chunk in stream:
+                    if getattr(chunk, "choices", None):
+                        delta = chunk.choices[0].delta
+                        content = getattr(delta, "content", "")
+                        tool_calls = getattr(delta, "tool_calls", None)
+
+                        # Use UTF-8 safe buffer for content
+                        if content:
+                            safe_content = stream_buffer.add_chunk(content)
+                            if safe_content:
+                                logger.bind(tag=TAG).debug(
+                                    f"[ASYNC_OPENAI_STREAM] Yielding UTF-8 safe chunk: {repr(safe_content[:50])}"
+                                )
+                                yield safe_content, tool_calls
+                            else:
+                                # Content is being buffered, don't yield yet
+                                yield "", tool_calls
+                        else:
+                            yield content, tool_calls
+                    elif isinstance(getattr(chunk, "usage", None), CompletionUsage):
+                        usage_info = getattr(chunk, "usage", None)
+                        logger.bind(tag=TAG).info(
+                            f"Token 消耗：输入 {getattr(usage_info, 'prompt_tokens', '未知')}，"
+                            f"输出 {getattr(usage_info, 'completion_tokens', '未知')}，"
+                            f"共计 {getattr(usage_info, 'total_tokens', '未知')}"
+                        )
+
+            # Flush any remaining buffered content at stream end
+            final_content = stream_buffer.flush()
+            if final_content:
+                logger.bind(tag=TAG).debug(
+                    f"[ASYNC_OPENAI_STREAM] Flushing final buffer: {repr(final_content[:50])}"
+                )
+                yield final_content, None
+
+        except Exception as e:
+            logger.bind(tag=TAG).error(f"Error in async function call streaming: {e}")
             yield f"【OpenAI服务响应异常: {e}】", None

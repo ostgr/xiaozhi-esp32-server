@@ -78,3 +78,25 @@ class LLMProviderBase(ABC):
             f"[LLM STREAMING] Completed LLM response with functions (tokens={token_count})"
         )
 
+    async def async_response(self, session_id, dialogue, **kwargs):
+        """
+        Async LLM response generator - default implementation raises NotImplementedError
+
+        Providers that support async should override this method.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support async_response(). "
+            "Use response() or implement async_response()."
+        )
+
+    async def async_response_with_functions(self, session_id, dialogue, functions=None, **kwargs):
+        """
+        Async LLM response with functions - default implementation raises NotImplementedError
+
+        Providers that support async function calling should override this method.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support async_response_with_functions(). "
+            "Use response_with_functions() or implement async_response_with_functions()."
+        )
+

@@ -8,6 +8,7 @@ pyyml==0.0.2
 opuslib_next==1.1.5
 pydub==0.25.1
 openai==2.8.1
+tenacity==8.2.3
 google-generativeai==0.8.5
 edge_tts==7.2.6
 httpx==0.28.1
