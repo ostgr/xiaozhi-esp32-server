@@ -1,38 +1,27 @@
 """UTF-8 Safe Stream Buffer for LLM Streaming
 
-Ensures multi-byte UTF-8 characters and Vietnamese word boundaries
-are preserved during streaming from LLM to TTS.
+Ensures multi-byte UTF-8 characters are preserved during streaming.
 """
 
 from loguru import logger
 
 
 class UTF8StreamBuffer:
-    """Buffer for UTF-8 safe text streaming with word boundary detection.
+    """Buffer for UTF-8 safe text streaming.
 
-    Handles:
-    - Incomplete multi-byte UTF-8 sequences (Vietnamese diacritics, emoji)
-    - Word boundary buffering for better Vietnamese word coherence
-    - Optional timeout to prevent stalling on long words
+    Handles incomplete multi-byte UTF-8 sequences (Vietnamese diacritics, emoji)
+    to prevent character corruption during streaming.
     """
 
-    def __init__(self, wait_for_word_boundary=True):
-        """Initialize the stream buffer.
-
-        Args:
-            wait_for_word_boundary: If True, waits for space/punctuation
-                                   before yielding. This prevents words
-                                   like "Mình" from being split. If False,
-                                   only ensures UTF-8 boundaries.
-        """
+    def __init__(self):
+        """Initialize the stream buffer."""
         self._text_buffer = ""
-        self.wait_for_word_boundary = wait_for_word_boundary
 
     def add_chunk(self, chunk: str) -> str:
         """Add chunk and return safe-to-yield text.
 
-        If incomplete UTF-8 or word boundary not reached, buffers and
-        returns empty string. Otherwise returns accumulated text.
+        If incomplete UTF-8 sequence detected, buffers and returns empty string.
+        Otherwise returns accumulated text.
 
         Args:
             chunk: Text chunk from LLM streaming
@@ -48,9 +37,6 @@ class UTF8StreamBuffer:
             logger.trace(
                 f"[UTF8_BUFFER] ASCII chunk (fast path): {repr(chunk[:50])}"
             )
-            # For word boundary mode, check if this chunk ends with boundary
-            if self.wait_for_word_boundary:
-                return self._handle_word_boundary(chunk)
             return chunk
 
         # Add to buffer
@@ -68,11 +54,7 @@ class UTF8StreamBuffer:
             )
             return ""
 
-        # UTF-8 is complete, check word boundary
-        if self.wait_for_word_boundary:
-            return self._handle_word_boundary(self._text_buffer)
-
-        # Safe to yield without word boundary check
+        # Safe to yield
         result = self._text_buffer
         self._text_buffer = ""
         logger.trace(f"[UTF8_BUFFER] Yielding: {repr(result[:50])}")
@@ -88,58 +70,6 @@ class UTF8StreamBuffer:
         if result:
             logger.trace(f"[UTF8_BUFFER] Flushing: {repr(result[:50])}")
         self._text_buffer = ""
-        return result
-
-    def _handle_word_boundary(self, text: str) -> str:
-        """Handle word boundary buffering.
-
-        Yields text up to last word boundary. If no boundary found,
-        buffers text and returns empty string.
-
-        Args:
-            text: Text to check for word boundaries
-
-        Returns:
-            Text up to last boundary, or empty if buffering
-        """
-        if not text:
-            return ""
-
-        # Word boundaries: space, punctuation, newline
-        boundaries = {
-            ' ', '\t', '\n', '\r',
-            '.', ',', '!', '?', ';', ':',
-            '。', '，', '！', '？', '；', '：',
-            '-', '—', '~'
-        }
-
-        # Find last word boundary
-        last_boundary_pos = -1
-        for i in range(len(text) - 1, -1, -1):
-            if text[i] in boundaries:
-                last_boundary_pos = i
-                break
-
-        if last_boundary_pos == -1:
-            # No boundary found, buffer everything
-            # But only if not already in buffer (for ASCII fast path)
-            if text != self._text_buffer:
-                self._text_buffer += text
-            logger.trace(
-                f"[UTF8_BUFFER] No word boundary, buffering "
-                f"{len(self._text_buffer)} chars"
-            )
-            return ""
-
-        # Found boundary, yield up to and including it
-        result = text[:last_boundary_pos + 1]
-        remaining = text[last_boundary_pos + 1:]
-
-        self._text_buffer = remaining
-        logger.trace(
-            f"[UTF8_BUFFER] Word boundary found, yielding "
-            f"{repr(result[:50])}"
-        )
         return result
 
     def _has_incomplete_utf8_at_end(self, text: str) -> bool:
