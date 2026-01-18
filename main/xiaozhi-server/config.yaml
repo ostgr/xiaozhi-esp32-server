@@ -633,10 +633,10 @@ TTS:
   ElevenLabsTTS:
     type: elevenlabs_stream
     # ElevenLabs API key, obtain from https://elevenlabs.io/app/settings/api-keys
-    api_key: sk_d455b25f6ef58bfd92d81ded5ffe7cd58ba235c3bb1174e5
+    api_key: sk_7c627d6a48de78426dc039921d9b9b397d4499536f4a5745
     # Voice ID - select or clone voice at https://elevenlabs.io/voice-library
     # Vietnamese voice: 558B1EcdabtcSdleer40
-    voice_id: 558B1EcdabtcSdleer40
+    voice_id: DVQIYWzpAqd5qcoIlirg
     # Model selection:
     # - eleven_flash_v2_5: Highest quality, supports 29 languages (recommended)
     # - eleven_turbo_v2_5: Fast generation, low latency
